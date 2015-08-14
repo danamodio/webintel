@@ -49,7 +49,7 @@ def evalRules():
     found("VMware Horizon") if inBody("VMware Horizon") and inBody("connect to your desktop and applications") else 0
     found("Cisco VPN") if inBody("CSCOE") and inBody("SSL VPN Service") else 0
     found("Windows SBS") if inBody("Welcome to Windows Small Business Server") else 0
-    found("Mediawiki") if inBody("wiki/Main_Page") or inBody("wiki/User:") or inBody("wiki/File:") or inBody("poweredby_mediawiki") else 0
+    found("Mediawiki") if inBody("wiki/Main_Page") or inBody("wiki/Special:") or inBody("wiki/File:") or inBody("poweredby_mediawiki") else 0
     found("Thycotic Secret Server") if inBody("Thycotic Secret Server") else 0
     found("Directory Listing") if inBody("Index of") or inBody("Parent Directory") else 0
 
