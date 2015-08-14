@@ -7,7 +7,6 @@
 
 
 import sys
-import yaml
 import argparse
 import base64
 import xml.etree.ElementTree as ET
