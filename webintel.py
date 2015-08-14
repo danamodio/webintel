@@ -183,41 +183,39 @@ def probeUrl():
 
 # may add some of this functionality back in for deeper probing (dir buster style)
 # also used old rules lang
-"""
-def profile(url,response,data):
-    bogus = bogusSuccess(url)
-    for rule in rules:
-        found = 0
-        for test in rules[rule]['body']:
-            if data.find(test)>-1:
-                found = found+1
-        #if not args.nofollowup:
-        # do a quick test before running path rules.
-        if not bogus:
-            for path in rules[rule]['path']:
-                try:
-                    resp, content = getHttpLib().request(url + path,redirections=0)
-                    if resp.status == 200:
-                        print "[!] FOUND: " + url + path
-                        found = found + 1
-                except (IOError,httplib2.RedirectLimit) as err:
-                    #print "[!] ERROR:", str(err)
-                    pass
-        if found > 0:
-            print "[!] PROFILE: " +rule+ " (" + str(found) + "/" + str(countRules(rule)) + ")"
-
-def bogusSuccess(url):
-    try:
-        resp, content = getHttpLib().request(url + "/asdfsa/asf/sdfwe/rr344433/s/egd/xbvvvvv/",redirections=0)
-        if resp.status == 200:
-            # we almost certainly cannot trust this server's response codes
-            print "[!] WARNING: This server is responding with bogus 200 status codes. Skipping some test cases."
-            return True
-    except httplib2.RedirectLimit as e:
-        pass
-    return False
-
-"""
+# 
+# def profile(url,response,data):
+#     bogus = bogusSuccess(url)
+#     for rule in rules:
+#         found = 0
+#         for test in rules[rule]['body']:
+#             if data.find(test)>-1:
+#                 found = found+1
+#         #if not args.nofollowup:
+#         # do a quick test before running path rules.
+#         if not bogus:
+#             for path in rules[rule]['path']:
+#                 try:
+#                     resp, content = getHttpLib().request(url + path,redirections=0)
+#                     if resp.status == 200:
+#                         print "[!] FOUND: " + url + path
+#                         found = found + 1
+#                 except (IOError,httplib2.RedirectLimit) as err:
+#                     #print "[!] ERROR:", str(err)
+#                     pass
+#         if found > 0:
+#             print "[!] PROFILE: " +rule+ " (" + str(found) + "/" + str(countRules(rule)) + ")"
+# 
+# def bogusSuccess(url):
+#     try:
+#         resp, content = getHttpLib().request(url + "/asdfsa/asf/sdfwe/rr344433/s/egd/xbvvvvv/",redirections=0)
+#         if resp.status == 200:
+#             # we almost certainly cannot trust this server's response codes
+#             print "[!] WARNING: This server is responding with bogus 200 status codes. Skipping some test cases."
+#             return True
+#     except httplib2.RedirectLimit as e:
+#         pass
+#     return False
 
 def main(argv):
     filename = ""
