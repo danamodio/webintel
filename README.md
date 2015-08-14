@@ -40,9 +40,9 @@ Then it should be good to go!
 
 ### Output types
 
-    bash-3.2$ python webintel.py --url http://en.wikipedia.org --output csv
+    $ python webintel.py --url http://en.wikipedia.org --output csv
     http://en.wikipedia.org, Mediawiki
 
-    bash-3.2$ python webintel.py --url http://en.wikipedia.org --output xml
+    $ python webintel.py --url http://en.wikipedia.org --output xml
     <item><url>http://en.wikipedia.org</url><match>Mediawiki</match></item>
 
