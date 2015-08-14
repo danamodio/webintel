@@ -66,6 +66,7 @@ def evalRules():
     found("Mediawiki") if inBody("wiki/Main_Page") or inBody("wiki/Special:") or inBody("wiki/File:") or inBody("poweredby_mediawiki") else 0
     found("Thycotic Secret Server") if inBody("Thycotic Secret Server") else 0
     found("Directory Listing") if inBody("Index of") or inBody("Parent Directory") else 0
+    found("Junos Pulse") if inBody("dana-na") and inBody("Junos Pulse") else 0
 
 def parse():
     #loadRules(args)
