@@ -1,7 +1,8 @@
 # webintel
 Attempt to identify common CMS and web applications with a single request.
 
-Supports output from Nessus and Nmap. Alternatively, you can supply a single URL or file with a list of URLs.
+Supports output from Nessus and Nmap. 
+You can also supply a single URL or file with a list of URLs.
 
 For example:
 
