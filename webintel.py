@@ -57,7 +57,7 @@ def parse():
     print "[*] Starting Web Intel scanner -- by Dan Amodio"
     print "[*] This script attempts to identify common CMS and web applications with a single request."
     print "[*]"
-    if args.dns:
+    if args.fqdn:
         print '[*] Using DNS mode. Script will search for user provided hostnames in output.'
         print '[!] WARNING: If you did not manually specify hostnames in your scan input, this might fail.'
     
@@ -91,7 +91,7 @@ def parseNessus():
                 if item.get('svc_name') == 'www':
                     port = item.get('port')
                     thehost = None
-                    if args.dns:
+                    if args.fqdn:
                         #print fqdn, item.get('port')
                         thehost = fqdn
                     else:
@@ -110,9 +110,9 @@ def parseNmap():
     
     for host in root.findall('host'):
         addr = None
-        if not args.dns:
+        if not args.fqdn:
             addr = host.find('address').get('addr')
-        elif args.dns:
+        elif args.fqdn:
             for hostname in host.find('hostnames').findall('hostname'):
                 if hostname.get('type') == 'user':
                     addr = hostname.get('name') 
@@ -213,7 +213,7 @@ def main(argv):
     parser.add_argument('--url', type=str, required=False, help='profile a url.')
     #parser.add_argument('--subnet', type=str, required=False, help='subnet to scan.')
     #parser.add_argument('--ports', type=str, default='80,8080,8081,8000,9000,443,8443', required=False, help='the ports to scan for web services. e.g. 80,8080,443') # just use NMAP
-    parser.add_argument('--dns', default=False, action="store_true", help='Use dns. Pretty important if doing this over the internet due to how some shared hosting services route.')
+    parser.add_argument('--fqdn', default=False, action="store_true", help='Use the fully qualified domain name from scanner output (DNS). Pretty important if doing this over the internet due to how some shared hosting services route.')
     parser.add_argument('--debug', default=False, action="store_true", help="Print the response data.")
     #parser.add_argument('--rules',default='rules',type=file,required=False,help='the rules file')
     #parser.add_argument('--nofollowup', default=False, action="store_true", help='disable sending followup requests to a host, like /wp-login.php.') # I want to avoid doing this at all with this script.
