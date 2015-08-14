@@ -180,6 +180,8 @@ def probeUrl():
         error("Could create SSL connection to " + url)
     except socket.error as e:
         error("Could not open socket to " + url)
+    except httplib2.RelativeURIError as e:
+        error("Only absolute URIs are allowed (" + url + ")") 
 
 # may add some of this functionality back in for deeper probing (dir buster style)
 # also used old rules lang
