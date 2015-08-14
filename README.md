@@ -46,3 +46,6 @@ Then it should be good to go!
     $ python webintel.py --url http://en.wikipedia.org --output xml
     <item><url>http://en.wikipedia.org</url><match>Mediawiki</match></item>
 
+Note that warning and error messages will still output to terminal as std.err. 
+If you redirect output to a file, these messages should not populate into the file.
+
