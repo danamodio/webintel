@@ -6,6 +6,7 @@
 #
 
 
+from __future__ import print_function
 import sys
 import argparse
 import base64
@@ -20,16 +21,30 @@ resp = None
 respdata = None
 didFind = False
 
+def warn(*objs):
+    print("[*] WARNING: ", *objs, file=sys.stderr)
+
+def error(*objs):
+    print("[!] ERROR: ", *objs, file=sys.stderr)
+
 def inBody(test):
     return True if respdata.find(test)>-1 else False
 
 def inUrl(test):
     return True if resp['content-location'].find(test)>-1 else False
 
+def output(url, signature):
+    if args.output == "default":
+        print("[!] " + url + " : " + signature)
+    elif args.output == "csv":
+        print(url + ", " + signature)
+    elif args.output == "xml":
+        print("<item><url>" + url + "</url><match>" + signature + "</match></item>")
+
 def found(signature):
     global didFind
     didFind = True
-    print "[!] " + url + " : " + signature
+    output(url, signature)
 
 # https://en.wikipedia.org/wiki/%3F:#Python
 def evalRules():
@@ -54,12 +69,13 @@ def evalRules():
 
 def parse():
     #loadRules(args)
-    print "[*] Starting Web Intel scanner -- by Dan Amodio"
-    print "[*] This script attempts to identify common CMS and web applications with a single request."
-    print "[*]"
+    if args.output == "default":
+        print("[*] Starting Web Intel scanner -- by Dan Amodio")
+        print("[*] This script attempts to identify common CMS and web applications with a single request.")
+        print("[*]")
     if args.fqdn:
-        print '[*] Using DNS mode. Script will search for user provided hostnames in output.'
-        print '[!] WARNING: If you did not manually specify hostnames in your scan input, this might fail.'
+        warn('Using DNS mode. Script will search for user provided hostnames in output.')
+        warn('If you did not manually specify hostnames in your scan input, this might fail.')
     
     if(args.nmap):
         parseNmap()
@@ -74,7 +90,6 @@ def parse():
 
 # TODO - Seem to get dups from this nessus parsing. Need to uniq the results.
 def parseNessus():
-    print "[!] WARNING: This script doesn't fully support Nessus files yet."
     tree = ET.parse( args.nessus)
     root = tree.getroot().find('Report')
     
@@ -152,19 +167,19 @@ def probeUrl():
             #profile(url,resp,content)
             #evalRules(url,resp,content)
             if args.debug:
-                print resp
-                print respdata
+                print(resp)
+                print(respdata)
             evalRules()
             if didFind == False:
-                print "[*] " + url + " : No Signature Match"
+                output(url, "No Signature Match")
             else:
                 didFind = False
         else:
-            print "[!] ERROR: Got response code " + str(resp.status) + " from " + url
+            error("Got response code " + str(resp.status) + " from " + url)
     except httplib2.SSLHandshakeError as e:
-        print "[!] ERROR: Could create SSL connection to " + url
+        error("Could create SSL connection to " + url)
     except socket.error as e:
-        print "[!] ERROR: Could not open socket to " + url
+        error("Could not open socket to " + url)
 
 # may add some of this functionality back in for deeper probing (dir buster style)
 # also used old rules lang
@@ -211,6 +226,7 @@ def main(argv):
     parser.add_argument('--nessus', type=file, help='.nessus xml file.')
     parser.add_argument('--listfile', type=file, help='straight file list containing fully qualified urls.')
     parser.add_argument('--url', type=str, required=False, help='profile a url.')
+    parser.add_argument('--output', default="default", type=str, required=False, help='output type: csv, xml')
     #parser.add_argument('--subnet', type=str, required=False, help='subnet to scan.')
     #parser.add_argument('--ports', type=str, default='80,8080,8081,8000,9000,443,8443', required=False, help='the ports to scan for web services. e.g. 80,8080,443') # just use NMAP
     parser.add_argument('--fqdn', default=False, action="store_true", help='Use the fully qualified domain name from scanner output (DNS). Pretty important if doing this over the internet due to how some shared hosting services route.')
@@ -226,7 +242,7 @@ def main(argv):
         args = parser.parse_args() 
         parse( )
     except IOError as err: 
-        print type(err), str(err)
+        error(str(type(err)) + " : " + str(err))
         parser.print_help()
         sys.exit(2)
 
