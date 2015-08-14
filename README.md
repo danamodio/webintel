@@ -19,6 +19,8 @@ I'm using httplib2, so you'll need that:
 
 Then it should be good to go!
 
+## Usage
+
     $ python webintel.py
     usage: webintel.py [-h] [--nmap NMAP] [--nessus NESSUS] [--listfile LISTFILE]
                        [--url URL] [--fqdn] [--debug]
@@ -35,3 +37,12 @@ Then it should be good to go!
                            (DNS). Pretty important if doing this over the internet
                            due to how some shared hosting services route.
       --debug              Print the response data.
+
+### Output types
+
+    bash-3.2$ python webintel.py --url http://en.wikipedia.org --output csv
+    http://en.wikipedia.org, Mediawiki
+
+    bash-3.2$ python webintel.py --url http://en.wikipedia.org --output xml
+    <item><url>http://en.wikipedia.org</url><match>Mediawiki</match></item>
+
