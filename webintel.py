@@ -58,7 +58,7 @@ def evalRules():
     found("Citrix ShareFile Storage Server") if inBody("ShareFile Storage Server") else 0
     found("IIS7 Welcome Page") if inBody("welcome.png") and inBody("IIS7") else 0
     found("Citrix") if inBody("Citrix Systems") and inBody("vpn/") else 0
-    found("Outlook Web App") if inBody("Outlook Web App") and inBody("CookieAuth.dll") else 0
+    found("Outlook Web App") if inBody("Outlook Web App") else 0
     found("MobileIron") if inBody("MobileIron") else 0
     found("VMware Horizon") if inBody("VMware Horizon") and inBody("connect to your desktop and applications") else 0
     found("Cisco VPN") if inBody("/+CSCOE+/logon.html") or inBody("SSL VPN Service") else 0
