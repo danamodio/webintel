@@ -132,13 +132,14 @@ def parseNmap():
             for hostname in host.find('hostnames').findall('hostname'):
                 if hostname.get('type') == 'user':
                     addr = hostname.get('name') 
-        for port in host.find('ports').findall('port'):
-            portid = port.get('portid')
-            if port.find('state').get('state') == 'open':
-                if port.find('service').get('name') == 'http':
-                    probe("http",addr,portid) 
-                if port.find('service').get('name') == 'https':
-                    probe("https",addr,portid) 
+        if host.find('ports') != None:
+            for port in host.find('ports').findall('port'):
+                portid = port.get('portid')
+                if port.find('state').get('state') == 'open':
+                    if port.find('service').get('name') == 'http':
+                        probe("http",addr,portid) 
+                    if port.find('service').get('name') == 'https':
+                        probe("https",addr,portid) 
         
 def parseList():
     global url
@@ -183,6 +184,10 @@ def probeUrl():
         error("Could not open socket to " + url)
     except httplib2.RelativeURIError as e:
         error("Only absolute URIs are allowed (" + url + ")") 
+    except httplib2.RedirectLimit as e:
+        error("Redirected more times than rediection_limit allows (" + url + ")")
+    except httplib2.ServerNotFoundError as e:
+        error(str(e) + " (" + url + ")")
 
 # may add some of this functionality back in for deeper probing (dir buster style)
 # also used old rules lang
