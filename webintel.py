@@ -136,10 +136,11 @@ def parseNmap():
             for port in host.find('ports').findall('port'):
                 portid = port.get('portid')
                 if port.find('state').get('state') == 'open':
-                    if port.find('service').get('name') == 'http':
-                        probe("http",addr,portid) 
-                    if port.find('service').get('name') == 'https':
-                        probe("https",addr,portid) 
+                    if port.find('service') != None:
+                        if port.find('service').get('name') == 'http':
+                            probe("http",addr,portid) 
+                        if port.find('service').get('name') == 'https':
+                            probe("https",addr,portid) 
         
 def parseList():
     global url
