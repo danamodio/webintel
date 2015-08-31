@@ -190,7 +190,8 @@ def probeUrl():
         error("Only absolute URIs are allowed (" + url + ")") 
     except httplib2.RedirectLimit as e:
         error("Redirected more times than rediection_limit allows (" + url + ")")
-    except httplib2.ServerNotFoundError as e:
+    except:
+        e = sys.exc_info()[0]
         error(str(e) + " (" + url + ")")
 
 # may add some of this functionality back in for deeper probing (dir buster style)
