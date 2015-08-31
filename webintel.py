@@ -72,6 +72,7 @@ def evalRules():
     found("Default Tomcat Homepage") if inBody("this is the default Tomcat home page") else 0
     found("Quest Password Manager") if inBody("Quest Password Manager") else 0
     found("FogBugz") if inBody("FogBugz") and inBody("fogbugz.stackexchange.com") else 0
+    found("WebSphere 6.1") if inBody("IBM HTTP Server") and inBody("infocenter/wasinfo/v6r1") else 0
 
 def parse():
     #loadRules(args)
