@@ -70,6 +70,7 @@ def evalRules():
     found("Directory Listing") if inBody("Index of") or inBody("Parent Directory") else 0
     found("Junos Pulse") if inBody("dana-na") and inBody("Junos Pulse") else 0
     found("Default Tomcat Homepage") if inBody("this is the default Tomcat home page") else 0
+    found("Quest Password Manager") if inBody("Quest Password Manager") else 0
 
 def parse():
     #loadRules(args)
