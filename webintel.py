@@ -59,6 +59,7 @@ def evalRules():
     found("IIS7 Welcome Page") if inBody("welcome.png") and inBody("IIS7") else 0
     found("IIS8 Welcome Page") if inBody("Microsoft Internet Information Services 8.0") and inBody("ws8-brand.png") else 0
     found("Citrix") if inBody("Citrix Systems") and inBody("vpn/") else 0
+    found("Citrix") if inBody("/Citrix/SecureGateway") else 0
     found("Outlook Web App") if inBody("Outlook Web App") else 0
     found("MobileIron") if inBody("MobileIron") else 0
     found("VMware Horizon") if inBody("VMware Horizon") and inBody("connect to your desktop and applications") else 0
