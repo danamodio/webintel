@@ -80,6 +80,7 @@ def evalRules():
     found("FogBugz") if inBody("FogBugz") and inBody("fogbugz.stackexchange.com") else 0
     found("WebSphere 6.1") if inBody("IBM HTTP Server") and inBody("infocenter/wasinfo/v6r1") else 0
     found("Tomcat") if inHeader("server","Apache-Coyote") else 0
+    found("Glassfish") if inBody("GlassFish Server") and inBody("Your server is now running") else 0
 
 def parse():
     #loadRules(args)
