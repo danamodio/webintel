@@ -81,6 +81,7 @@ def evalRules():
     found("WebSphere 6.1") if inBody("IBM HTTP Server") and inBody("infocenter/wasinfo/v6r1") else 0
     found("Tomcat") if inHeader("server","Apache-Coyote") else 0
     found("Glassfish") if inBody("GlassFish Server") and inBody("Your server is now running") else 0
+    found("SAP") if inUrl("BOE/BI") and inBody("servletBridgeIframe") else 0
 
 def parse():
     #loadRules(args)
