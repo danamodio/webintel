@@ -33,6 +33,12 @@ def inBody(test):
 def inUrl(test):
     return True if resp['content-location'].find(test)>-1 else False
 
+def inHeader(header,test):
+    if resp[header]:
+        if resp[header].find(test)>-1:
+            return True
+    return False
+
 def output(url, signature):
     if args.output == "default":
         print("[!] " + url + " : " + signature)
@@ -73,6 +79,7 @@ def evalRules():
     found("Quest Password Manager") if inBody("Quest Password Manager") else 0
     found("FogBugz") if inBody("FogBugz") and inBody("fogbugz.stackexchange.com") else 0
     found("WebSphere 6.1") if inBody("IBM HTTP Server") and inBody("infocenter/wasinfo/v6r1") else 0
+    found("Tomcat") if inHeader("server","Apache-Coyote") else 0
 
 def parse():
     #loadRules(args)
