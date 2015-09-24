@@ -14,6 +14,9 @@ import xml.etree.ElementTree as ET
 import httplib2
 import socket
 
+reload(sys)  
+sys.setdefaultencoding('utf8')
+
 # did globals for easy rule language. kinda gross, but this is single thread.
 args = None
 url = None 
@@ -81,7 +84,7 @@ def evalRules():
     found("WebSphere 6.1") if inBody("IBM HTTP Server") and inBody("infocenter/wasinfo/v6r1") else 0
     found("Tomcat") if inHeader("server","Apache-Coyote") else 0
     found("Glassfish") if inBody("GlassFish Server") and inBody("Your server is now running") else 0
-    found("SAP") if inUrl("BOE/BI") and inBody("servletBridgeIframe") else 0
+    found("SAP Business Objects") if inUrl("BOE/BI") and inBody("servletBridgeIframe") else 0 # http://www.cvedetails.com/vulnerability-list/vendor_id-797/product_id-20077/SAP-Businessobjects.html
 
 def parse():
     #loadRules(args)
