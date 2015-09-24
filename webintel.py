@@ -34,12 +34,11 @@ def inBody(test):
     return True if respdata.find(test)>-1 else False
 
 def inUrl(test):
-    return True if resp['content-location'].find(test)>-1 else False
+    return True if resp.get('content-location','').find(test)>-1 else False
 
 def inHeader(header,test):
-    if resp[header]:
-        if resp[header].find(test)>-1:
-            return True
+    if resp.get(header,'').find(test)>-1:
+        return True
     return False
 
 def output(url, signature):
