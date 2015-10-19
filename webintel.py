@@ -8,6 +8,7 @@
 
 from __future__ import print_function
 import sys
+import traceback
 import argparse
 import base64
 import xml.etree.ElementTree as ET
@@ -83,7 +84,9 @@ def evalRules():
     found("WebSphere 6.1") if inBody("IBM HTTP Server") and inBody("infocenter/wasinfo/v6r1") else 0
     found("Tomcat") if inHeader("server","Apache-Coyote") else 0
     found("Glassfish") if inBody("GlassFish Server") and inBody("Your server is now running") else 0
+    found("MobileGuard") if inBody("MobileGuard Compliance Home Page") else 0
     found("SAP Business Objects") if inUrl("BOE/BI") and inBody("servletBridgeIframe") else 0 # http://www.cvedetails.com/vulnerability-list/vendor_id-797/product_id-20077/SAP-Businessobjects.html
+    found("Kentico") if inBody("CMSPages/GetResource.ashx") else 0
 
 def parse():
     #loadRules(args)
@@ -207,6 +210,8 @@ def probeUrl():
     except:
         e = sys.exc_info()[0]
         error(str(e) + " (" + url + ")")
+        if args.debug:
+            traceback.print_tb(sys.exc_info()[2])
 
 # may add some of this functionality back in for deeper probing (dir buster style)
 # also used old rules lang
