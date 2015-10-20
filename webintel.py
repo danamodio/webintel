@@ -87,6 +87,7 @@ def evalRules():
     found("MobileGuard") if inBody("MobileGuard Compliance Home Page") else 0
     found("SAP Business Objects") if inUrl("BOE/BI") and inBody("servletBridgeIframe") else 0 # http://www.cvedetails.com/vulnerability-list/vendor_id-797/product_id-20077/SAP-Businessobjects.html
     found("Kentico") if inBody("CMSPages/GetResource.ashx") else 0
+    found("vSphere") if inBody("client/VMware-viclient.exe") else 0
 
 def parse():
     #loadRules(args)
