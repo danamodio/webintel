@@ -89,6 +89,7 @@ def evalRules():
     found("Kentico") if inBody("CMSPages/GetResource.ashx") else 0
     found("vSphere") if inBody("client/VMware-viclient.exe") else 0
     found("ESXi") if inBody('content="VMware ESXi is virtual infrastructure') else 0
+    found("Juniper Web Device Manager") if inBody("Log In - Juniper Web Device Manager") else 0
 
 def parse():
     #loadRules(args)
