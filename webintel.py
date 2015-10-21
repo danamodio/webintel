@@ -92,6 +92,7 @@ def evalRules():
     found("Juniper Web Device Manager") if inBody("Log In - Juniper Web Device Manager") else 0
     found("SNARE") if inBody("Intersect Alliance") and inBody("SNARE for") else 0
     found("HP System Management Homepage") if inBody("HP System Management Homepage") else 0
+    found("Symantec Reporting") if inBody("log on to Symantec Reporting") else 0
 
 def parse():
     #loadRules(args)
