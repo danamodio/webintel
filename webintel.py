@@ -90,6 +90,8 @@ def evalRules():
     found("vSphere") if inBody("client/VMware-viclient.exe") else 0
     found("ESXi") if inBody('content="VMware ESXi is virtual infrastructure') else 0
     found("Juniper Web Device Manager") if inBody("Log In - Juniper Web Device Manager") else 0
+    found("SNARE") if inBody("Intersect Alliance") and inBody("SNARE for") else 0
+    found("HP System Management Homepage") if inBody("HP System Management Homepage") else 0
 
 def parse():
     #loadRules(args)
