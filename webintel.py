@@ -98,6 +98,7 @@ def evalRules():
     found("Cisco Applications") if inBody("Installed Applications") and inBody("ciscologo.gif") else 0
     found("Cisco Prime Data Center Manager") if inBody("Cisco Prime") and inBody("Data Center Network Manager") else 0
     found("Axis Camera") if inBody("/view/index.shtml") else 0
+    found("Apache Default") if inBody("This is the default web page for this server.") and inBody("It works!") else 0
 
 def parse():
     #loadRules(args)
