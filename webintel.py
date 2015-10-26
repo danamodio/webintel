@@ -93,6 +93,7 @@ def evalRules():
     found("SNARE") if inBody("Intersect Alliance") and inBody("SNARE for") else 0
     found("HP System Management Homepage") if inBody("HP System Management Homepage") else 0
     found("Symantec Reporting") if inBody("log on to Symantec Reporting") else 0
+    found("Silver Peak Appliance Management") if inBody("Silver Peak Systems") else 0
 
 def parse():
     #loadRules(args)
