@@ -95,6 +95,7 @@ def evalRules():
     found("Symantec Reporting") if inBody("log on to Symantec Reporting") else 0
     found("Silver Peak Appliance Management") if inBody("Silver Peak Systems") else 0
     found("EMC Unisphere") if inBody('src="engMessage.js"') and inBody("oemMessage.js") else 0
+    found("Cisco Unified Communications") if inBody("Cisco Unified Communications") else 0
 
 def parse():
     #loadRules(args)
