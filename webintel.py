@@ -100,6 +100,7 @@ def evalRules():
     found("Axis Camera") if inBody("/view/index.shtml") else 0
     found("Apache Default") if inBody("This is the default web page for this server.") and inBody("It works!") else 0
     found("Dell Remote Access Controller") if inBody("Dell Remote Access Controller") else 0
+    found("Infoblox") if inBody('content="Infoblox WebUI Login Page') else 0
 
 def parse():
     #loadRules(args)
