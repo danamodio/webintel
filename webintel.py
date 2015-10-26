@@ -96,6 +96,7 @@ def evalRules():
     found("Silver Peak Appliance Management") if inBody("Silver Peak Systems") else 0
     found("EMC Unisphere") if inBody('src="engMessage.js"') and inBody("oemMessage.js") else 0
     found("Cisco Applications") if inBody("Installed Applications") and inBody("ciscologo.gif") else 0
+    found("Cisco Prime Data Center Manager") if inBody("Cisco Prime") and inBody("Data Center Network Manager") else 0
 
 def parse():
     #loadRules(args)
