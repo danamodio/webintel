@@ -88,7 +88,7 @@ def evalRules():
     found("SAP Business Objects") if inUrl("BOE/BI") and inBody("servletBridgeIframe") else 0 # http://www.cvedetails.com/vulnerability-list/vendor_id-797/product_id-20077/SAP-Businessobjects.html
     found("Kentico") if inBody("CMSPages/GetResource.ashx") else 0
     found("vSphere") if inBody("client/VMware-viclient.exe") else 0
-    found("ESXi") if inBody('content="VMware ESXi is virtual infrastructure') else 0
+    found("ESXi") if inBody('content="VMware ESXi') else 0
     found("Juniper Web Device Manager") if inBody("Log In - Juniper Web Device Manager") else 0
     found("SNARE") if inBody("Intersect Alliance") and inBody("SNARE for") else 0
     found("HP System Management Homepage") if inBody("HP System Management Homepage") else 0
