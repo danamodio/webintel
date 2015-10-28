@@ -103,6 +103,7 @@ def evalRules():
     found("Dell Remote Access Controller") if inBody("Dell Remote Access Controller") else 0
     found("Infoblox") if inBody('content="Infoblox WebUI Login Page') else 0
     found("Puppet Enterprise Console") if inBody("Puppet Enterprise Console") else 0
+    found("Entrust") if inBody('content="Entrust SSM') else 0
 
 def parse():
     #loadRules(args)
