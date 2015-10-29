@@ -99,11 +99,12 @@ def evalRules():
     found("Cisco Applications") if inBody("Installed Applications") and inBody("ciscologo.gif") else 0
     found("Cisco Prime Data Center Manager") if inBody("Cisco Prime") and inBody("Data Center Network Manager") else 0
     found("Axis Camera") if inBody("/view/index.shtml") else 0
-    found("Apache Default") if inBody("This is the default web page for this server.") and inBody("It works!") else 0
+    found("Apache Default") if inBody("This is the default web page for this server.") or inBody("Seeing this instead of the website you expected?") else 0
     found("Dell Remote Access Controller") if inBody("Dell Remote Access Controller") else 0
     found("Infoblox") if inBody('content="Infoblox WebUI Login Page') else 0
     found("Puppet Enterprise Console") if inBody("Puppet Enterprise Console") else 0
     found("Entrust") if inBody('content="Entrust SSM') else 0
+    found("Under Construction") if inBody("The site you were trying to reach does not currently have a default page") and inBody("Under Construction") else 0
 
 def parse():
     #loadRules(args)
