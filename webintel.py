@@ -124,8 +124,7 @@ def evalRules():
     found("Cisco Secure ACS") if inBody("<title>Cisco Secure ACS Login</title>") else 0
     found("Cisco Integrated Management Controller") if inBody("<title>Cisco Integrated Management Controller Login</title>") else 0
     found("Snap Server") if inUrl("/sadmin/GetLogin.event") else 0
-    
-
+    found("Palo Alto GlobalProtect Portal") if inBody("GlobalProtect Portal") else 0
 
 def parse():
     #loadRules(args)
