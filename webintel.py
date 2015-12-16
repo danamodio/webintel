@@ -83,8 +83,8 @@ def evalRules():
     found("Quest Password Manager") if inBody("Quest Password Manager") else 0
     found("FogBugz") if inBody("FogBugz") and inBody("fogbugz.stackexchange.com") else 0
     found("WebSphere 6.1") if inBody("IBM HTTP Server") and inBody("infocenter/wasinfo/v6r1") else 0
-    found("Tomcat") if inHeader("server","Apache-Coyote") else 0
-    found("Glassfish") if inBody("GlassFish Server") and inBody("Your server is now running") else 0
+    found("Tomcat / JBOSS") if inHeader("server","Apache-Coyote") else 0
+    found("Default Glassfish Homepage") if inBody("GlassFish Server") and inBody("Your server is now running") else 0
     found("MobileGuard") if inBody("MobileGuard Compliance Home Page") else 0
     found("SAP Business Objects") if inUrl("BOE/BI") and inBody("servletBridgeIframe") else 0 # http://www.cvedetails.com/vulnerability-list/vendor_id-797/product_id-20077/SAP-Businessobjects.html
     found("Kentico") if inBody("CMSPages/GetResource.ashx") else 0
@@ -105,6 +105,16 @@ def evalRules():
     found("Puppet Enterprise Console") if inBody("Puppet Enterprise Console") else 0
     found("Entrust") if inBody('content="Entrust SSM') else 0
     found("Under Construction") if inBody("does not currently have a default page") and inBody("Under Construction") else 0
+    found("Barracuda Web Filter") if inBody("Barracuda Networks") and inBody("Web Filter") else 0
+    found("Tripwire") if inBody("console/app.showApp.cmd") and inBody("Tripwire") else 0
+    found("SolarWinds Orion") if inBody("SolarWinds Orion") or inBody("orionmaster.js.i18n.ashx") else 0
+    found("Cisco ASDM") if inBody("Cisco ASDM") and inBody("admin/public/startup.jnlp") else 0
+    found("Red Hat Satellite") if inBody("Red Hat Satellite") and inBody("rhn-base.css") else 0
+    found("DELL On Board Remote Management") if inBody("On Board Remote Management") and inBody("status.html") else 0
+    found("Lansweeper") if inBody("Lansweeper") and inBody("lansweeper.js.aspx") else 0
+    found("Raritan Dominion KX II (KVM)") if inBody("Raritan") and inBody("Dominion KX II") else 0
+    found("HP iLO") if inBody("Hewlett-Packard") and inBody("iLO") else 0
+
 
 def parse():
     #loadRules(args)
