@@ -118,6 +118,11 @@ def evalRules():
     found("IIS Windows Server 8.5") if inBody("<title>IIS Windows Server</title>") and inBody("iis-85.png") else 0
     found("PowerEdge R420 iDRAC") if inBody("PowerEdge R420") and inBody("idrac") else 0
     found("Dell PowerVault TL4000 Tape Library") if inBody("<title>Dell PowerVault TL4000 Tape Library</title>") and inBody("RMULogin") else 0
+    found("Codian ISDN") if inBody("<title>Codian ISDN") else 0
+    found("BIG-IP Configuration Utility") if inBody("BIG-IP") and inBody("Configuration Utility") else 0
+    found("iDRAC 8") if inBody("iDRAC8 - Login</title>") else 0
+    found("Cisco Secure ACS") if inBody("<title>Cisco Secure ACS Login</title>") else 0
+    found("Cisco Integrated Management Controller") if inBody("<title>Cisco Integrated Management Controller Login</title>") else 0
 
 
 def parse():
