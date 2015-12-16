@@ -114,6 +114,10 @@ def evalRules():
     found("Lansweeper") if inBody("Lansweeper") and inBody("lansweeper.js.aspx") else 0
     found("Raritan Dominion KX II (KVM)") if inBody("Raritan") and inBody("Dominion KX II") else 0
     found("HP iLO") if inBody("Hewlett-Packard") and inBody("iLO") else 0
+    found("ArcSight Management Center") if inBody("<title>ArcSight Management Center</title>") else 0
+    found("IIS Windows Server 8.5") if inBody("<title>IIS Windows Server</title>") and inBody("iis-85.png") else 0
+    found("PowerEdge R420 iDRAC") if inBody("PowerEdge R420") and inBody("idrac") else 0
+    found("Dell PowerVault TL4000 Tape Library") if inBody("<title>Dell PowerVault TL4000 Tape Library</title>") and inBody("RMULogin") else 0
 
 
 def parse():
