@@ -108,7 +108,7 @@ def evalRules():
     found("Barracuda Web Filter") if inBody("Barracuda Networks") and inBody("Web Filter") else 0
     found("Tripwire") if inBody("console/app.showApp.cmd") and inBody("Tripwire") else 0
     found("SolarWinds Orion") if inBody("SolarWinds Orion") or inBody("orionmaster.js.i18n.ashx") else 0
-    found("Cisco ASDM") if inBody("Cisco ASDM") and inBody("admin/public/startup.jnlp") else 0
+    found("Cisco ASDM") if inBody("Cisco ASDM") and inBody("startup.jnlp") else 0
     found("Red Hat Satellite") if inBody("Red Hat Satellite") and inBody("rhn-base.css") else 0
     found("DELL On Board Remote Management") if inBody("On Board Remote Management") and inBody("status.html") else 0
     found("Lansweeper") if inBody("Lansweeper") and inBody("lansweeper.js.aspx") else 0
@@ -123,6 +123,8 @@ def evalRules():
     found("iDRAC 8") if inBody("iDRAC8 - Login</title>") else 0
     found("Cisco Secure ACS") if inBody("<title>Cisco Secure ACS Login</title>") else 0
     found("Cisco Integrated Management Controller") if inBody("<title>Cisco Integrated Management Controller Login</title>") else 0
+    found("Snap Server") if inHeader("Location", "/sadmin/GetLogin.event") else 0
+    
 
 
 def parse():
