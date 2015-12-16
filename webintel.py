@@ -104,7 +104,7 @@ def evalRules():
     found("Infoblox") if inBody('content="Infoblox WebUI Login Page') else 0
     found("Puppet Enterprise Console") if inBody("Puppet Enterprise Console") else 0
     found("Entrust") if inBody('content="Entrust SSM') else 0
-    found("Under Construction") if inBody("The site you were trying to reach does not currently have a default page") and inBody("Under Construction") else 0
+    found("Under Construction") if inBody("does not currently have a default page") and inBody("Under Construction") else 0
 
 def parse():
     #loadRules(args)
