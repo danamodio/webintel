@@ -123,7 +123,7 @@ def evalRules():
     found("iDRAC 8") if inBody("iDRAC8 - Login</title>") else 0
     found("Cisco Secure ACS") if inBody("<title>Cisco Secure ACS Login</title>") else 0
     found("Cisco Integrated Management Controller") if inBody("<title>Cisco Integrated Management Controller Login</title>") else 0
-    found("Snap Server") if inHeader("Location", "/sadmin/GetLogin.event") else 0
+    found("Snap Server") if inUrl("/sadmin/GetLogin.event") else 0
     
 
 
