@@ -18,29 +18,14 @@ import socket
 reload(sys)  
 sys.setdefaultencoding('utf8')
 
-# did globals for easy rule language. kinda gross, but this is single thread.
+# GLOBALS
 args = None
-url = None 
-resp = None
-respdata = None
-didFind = False
 
 def warn(*objs):
     print("[*] WARNING: ", *objs, file=sys.stderr)
 
 def error(*objs):
     print("[!] ERROR: ", *objs, file=sys.stderr)
-
-def inBody(test):
-    return True if respdata.find(test)>-1 else False
-
-def inUrl(test):
-    return True if resp.get('content-location','').find(test)>-1 else False
-
-def inHeader(header,test):
-    if resp.get(header,'').find(test)>-1:
-        return True
-    return False
 
 def output(url, signature):
     if args.output == "default":
@@ -50,81 +35,138 @@ def output(url, signature):
     elif args.output == "xml":
         print("<item><url>" + url + "</url><match>" + signature + "</match></item>")
 
-def found(signature):
-    global didFind
-    didFind = True
-    output(url, signature)
+# Probing class
+class Probe:
+    def __init__(self):
+        self.url = None 
+        self.resp = None
+        self.respdata = None
+        self.didFind = False
 
-# https://en.wikipedia.org/wiki/%3F:#Python
-def evalRules():
-    found("Wordpress") if inBody("wp-content/") or inBody("wp-includes") else 0 
-    found("Drupal") if inBody("drupal.min.js") or inBody("Drupal.settings") or inBody("http://drupal.org") or inBody("/node") else 0 
-    found("Coldfusion") if inBody(".cfm") or inBody(".cfc") else 0
-    found("Accellion SFT") if inBody("Secured by Accellion") else 0
-    found("F5 BIG-IP") if (inBody("licensed from F5 Networks") and inUrl("my.policy")) or (inBody("BIG-IP logout page") and inUrl("my.logout.php")) else 0
-    found("Confluence") if inBody("login to Confluence") or inBody("Log in to Confluence") or inBody("com-atlassian-confluence") else 0
-    found("Lotus Domino") if inBody("homepage.nsf/homePage.gif?OpenImageResource") or (inBody("Notes Client") and inBody("Lotus")) else 0
-    found("Citrix ShareFile Storage Server") if inBody("ShareFile Storage Server") else 0
-    found("IIS7 Welcome Page") if inBody("welcome.png") and inBody("IIS7") else 0
-    found("IIS8 Welcome Page") if inBody("Microsoft Internet Information Services 8.0") and inBody("ws8-brand.png") else 0
-    found("Citrix") if inBody("Citrix Systems") and inBody("vpn/") else 0
-    found("Citrix") if inBody("/Citrix/SecureGateway") else 0
-    found("Citrix Web PN") if inHeader("server","Citrix Web PN") else 0
-    found("Outlook Web App") if inBody("Outlook Web App") else 0
-    found("MobileIron") if inBody("MobileIron") else 0
-    found("VMware Horizon") if inBody("VMware Horizon") and inBody("connect to your desktop and applications") else 0
-    found("Cisco VPN") if inBody("/+CSCOE+/logon.html") or inBody("SSL VPN Service") else 0
-    found("Windows SBS") if inBody("Welcome to Windows Small Business Server") else 0
-    found("Mediawiki") if inBody("wiki/Main_Page") or inBody("wiki/Special:") or inBody("wiki/File:") or inBody("poweredby_mediawiki") else 0
-    found("Thycotic Secret Server") if inBody("Thycotic Secret Server") else 0
-    found("Directory Listing") if inBody("Index of") or inBody("Parent Directory") else 0
-    found("Junos Pulse") if inBody("dana-na") and inBody("Junos Pulse") else 0
-    found("Default Tomcat Homepage") if inBody("this is the default Tomcat home page") else 0
-    found("Quest Password Manager") if inBody("Quest Password Manager") else 0
-    found("FogBugz") if inBody("FogBugz") and inBody("fogbugz.stackexchange.com") else 0
-    found("WebSphere 6.1") if inBody("IBM HTTP Server") and inBody("infocenter/wasinfo/v6r1") else 0
-    found("Tomcat / JBOSS") if inHeader("server","Apache-Coyote") else 0
-    found("Default Glassfish Homepage") if inBody("GlassFish Server") and inBody("Your server is now running") else 0
-    found("MobileGuard") if inBody("MobileGuard Compliance Home Page") else 0
-    found("SAP Business Objects") if inUrl("BOE/BI") and inBody("servletBridgeIframe") else 0 # http://www.cvedetails.com/vulnerability-list/vendor_id-797/product_id-20077/SAP-Businessobjects.html
-    found("Kentico") if inBody("CMSPages/GetResource.ashx") else 0
-    found("vSphere") if inBody("client/VMware-viclient.exe") else 0
-    found("ESXi") if inBody('content="VMware ESXi') else 0
-    found("Juniper Web Device Manager") if inBody("Log In - Juniper Web Device Manager") else 0
-    found("SNARE") if inBody("Intersect Alliance") and inBody("SNARE for") else 0
-    found("HP System Management Homepage") if inBody("HP System Management Homepage") else 0
-    found("Symantec Reporting") if inBody("log on to Symantec Reporting") else 0
-    found("Silver Peak Appliance Management") if inBody("Silver Peak Systems") else 0
-    found("EMC Unisphere") if inBody('src="engMessage.js"') and inBody("oemMessage.js") else 0
-    found("Cisco Applications") if inBody("Installed Applications") and inBody("ciscologo.gif") else 0
-    found("Cisco Prime Data Center Manager") if inBody("Cisco Prime") and inBody("Data Center Network Manager") else 0
-    found("Axis Camera") if inBody("/view/index.shtml") else 0
-    found("Apache Default") if inBody("This is the default web page for this server.") or inBody("Seeing this instead of the website you expected?") else 0
-    found("Dell Remote Access Controller") if inBody("Dell Remote Access Controller") else 0
-    found("Infoblox") if inBody('content="Infoblox WebUI Login Page') else 0
-    found("Puppet Enterprise Console") if inBody("Puppet Enterprise Console") else 0
-    found("Entrust") if inBody('content="Entrust SSM') else 0
-    found("Under Construction") if inBody("does not currently have a default page") and inBody("Under Construction") else 0
-    found("Barracuda Web Filter") if inBody("Barracuda Networks") and inBody("Web Filter") else 0
-    found("Tripwire") if inBody("console/app.showApp.cmd") and inBody("Tripwire") else 0
-    found("SolarWinds Orion") if inBody("SolarWinds Orion") or inBody("orionmaster.js.i18n.ashx") else 0
-    found("Cisco ASDM") if inBody("Cisco ASDM") and inBody("startup.jnlp") else 0
-    found("Red Hat Satellite") if inBody("Red Hat Satellite") and inBody("rhn-base.css") else 0
-    found("DELL On Board Remote Management") if inBody("On Board Remote Management") and inBody("status.html") else 0
-    found("Lansweeper") if inBody("Lansweeper") and inBody("lansweeper.js.aspx") else 0
-    found("Raritan Dominion KX II (KVM)") if inBody("Raritan") and inBody("Dominion KX II") else 0
-    found("HP iLO") if inBody("Hewlett-Packard") and inBody("iLO") else 0
-    found("ArcSight Management Center") if inBody("<title>ArcSight Management Center</title>") else 0
-    found("IIS Windows Server 8.5") if inBody("<title>IIS Windows Server</title>") and inBody("iis-85.png") else 0
-    found("PowerEdge R420 iDRAC") if inBody("PowerEdge R420") and inBody("idrac") else 0
-    found("Dell PowerVault TL4000 Tape Library") if inBody("<title>Dell PowerVault TL4000 Tape Library</title>") and inBody("RMULogin") else 0
-    found("Codian ISDN") if inBody("<title>Codian ISDN") else 0
-    found("BIG-IP Configuration Utility") if inBody("BIG-IP") and inBody("Configuration Utility") else 0
-    found("iDRAC 8") if inBody("iDRAC8 - Login</title>") else 0
-    found("Cisco Secure ACS") if inBody("<title>Cisco Secure ACS Login</title>") else 0
-    found("Cisco Integrated Management Controller") if inBody("<title>Cisco Integrated Management Controller Login</title>") else 0
-    found("Snap Server") if inUrl("/sadmin/GetLogin.event") else 0
-    found("Palo Alto GlobalProtect Portal") if inBody("GlobalProtect Portal") else 0
+    def inBody(self, test):
+        return True if self.respdata.find(test)>-1 else False
+
+    def inUrl(self, test):
+        return True if self.resp.get('content-location','').find(test)>-1 else False
+
+    def inHeader(self, header,test):
+        if self.resp.get(header,'').find(test)>-1:
+            return True
+        return False
+
+    def found(self, signature):
+        self.didFind = True
+        output(self.url, signature)
+
+    # https://en.wikipedia.org/wiki/%3F:#Python
+    def evalRules(s):
+        s.found("Wordpress") if s.inBody("wp-content/") or s.inBody("wp-includes") else 0 
+        s.found("Drupal") if s.inBody("drupal.min.js") or s.inBody("Drupal.settings") or s.inBody("http://drupal.org") or s.inBody("/node") else 0 
+        s.found("Coldfusion") if s.inBody(".cfm") or s.inBody(".cfc") else 0
+        s.found("Accellion SFT") if s.inBody("Secured by Accellion") else 0
+        s.found("F5 BIG-IP") if (s.inBody("licensed from F5 Networks") and s.inUrl("my.policy")) or (s.inBody("BIG-IP logout page") and s.inUrl("my.logout.php")) else 0
+        s.found("Confluence") if s.inBody("login to Confluence") or s.inBody("Log in to Confluence") or s.inBody("com-atlassian-confluence") else 0
+        s.found("Lotus Domino") if s.inBody("homepage.nsf/homePage.gif?OpenImageResource") or (s.inBody("Notes Client") and s.inBody("Lotus")) else 0
+        s.found("Citrix ShareFile Storage Server") if s.inBody("ShareFile Storage Server") else 0
+        s.found("IIS7 Welcome Page") if s.inBody("welcome.png") and s.inBody("IIS7") else 0
+        s.found("IIS8 Welcome Page") if s.inBody("Microsoft Internet Information Services 8.0") and s.inBody("ws8-brand.png") else 0
+        s.found("Citrix") if s.inBody("Citrix Systems") and s.inBody("vpn/") else 0
+        s.found("Citrix") if s.inBody("/Citrix/SecureGateway") else 0
+        s.found("Citrix Web PN") if s.inHeader("server","Citrix Web PN") else 0
+        s.found("Outlook Web App") if s.inBody("Outlook Web App") else 0
+        s.found("MobileIron") if s.inBody("MobileIron") else 0
+        s.found("VMware Horizon") if s.inBody("VMware Horizon") and s.inBody("connect to your desktop and applications") else 0
+        s.found("Cisco VPN") if s.inBody("/+CSCOE+/logon.html") or s.inBody("SSL VPN Service") else 0
+        s.found("Windows SBS") if s.inBody("Welcome to Windows Small Business Server") else 0
+        s.found("Mediawiki") if s.inBody("wiki/Main_Page") or s.inBody("wiki/Special:") or s.inBody("wiki/File:") or s.inBody("poweredby_mediawiki") else 0
+        s.found("Thycotic Secret Server") if s.inBody("Thycotic Secret Server") else 0
+        s.found("Directory Listing") if s.inBody("Index of") or s.inBody("Parent Directory") else 0
+        s.found("Junos Pulse") if s.inBody("dana-na") and s.inBody("Junos Pulse") else 0
+        s.found("Default Tomcat Homepage") if s.inBody("this is the default Tomcat home page") else 0
+        s.found("Quest Password Manager") if s.inBody("Quest Password Manager") else 0
+        s.found("FogBugz") if s.inBody("FogBugz") and s.inBody("fogbugz.stackexchange.com") else 0
+        s.found("WebSphere 6.1") if s.inBody("IBM HTTP Server") and s.inBody("infocenter/wasinfo/v6r1") else 0
+        s.found("Tomcat / JBOSS") if s.inHeader("server","Apache-Coyote") else 0
+        s.found("Default Glassfish Homepage") if s.inBody("GlassFish Server") and s.inBody("Your server is now running") else 0
+        s.found("MobileGuard") if s.inBody("MobileGuard Compliance Home Page") else 0
+        s.found("SAP Business Objects") if s.inUrl("BOE/BI") and s.inBody("servletBridgeIframe") else 0 # http://www.cvedetails.com/vulnerability-list/vendor_id-797/product_id-20077/SAP-Businessobjects.html
+        s.found("Kentico") if s.inBody("CMSPages/GetResource.ashx") else 0
+        s.found("vSphere") if s.inBody("client/VMware-viclient.exe") else 0
+        s.found("ESXi") if s.inBody('content="VMware ESXi') else 0
+        s.found("Juniper Web Device Manager") if s.inBody("Log In - Juniper Web Device Manager") else 0
+        s.found("SNARE") if s.inBody("Intersect Alliance") and s.inBody("SNARE for") else 0
+        s.found("HP System Management Homepage") if s.inBody("HP System Management Homepage") else 0
+        s.found("Symantec Reporting") if s.inBody("log on to Symantec Reporting") else 0
+        s.found("Silver Peak Appliance Management") if s.inBody("Silver Peak Systems") else 0
+        s.found("EMC Unisphere") if s.inBody('src="engMessage.js"') and s.inBody("oemMessage.js") else 0
+        s.found("Cisco Applications") if s.inBody("Installed Applications") and s.inBody("ciscologo.gif") else 0
+        s.found("Cisco Prime Data Center Manager") if s.inBody("Cisco Prime") and s.inBody("Data Center Network Manager") else 0
+        s.found("Axis Camera") if s.inBody("/view/index.shtml") else 0
+        s.found("Apache Default") if s.inBody("This is the default web page for this server.") or s.inBody("Seeing this instead of the website you expected?") else 0
+        s.found("Dell Remote Access Controller") if s.inBody("Dell Remote Access Controller") else 0
+        s.found("Infoblox") if s.inBody('content="Infoblox WebUI Login Page') else 0
+        s.found("Puppet Enterprise Console") if s.inBody("Puppet Enterprise Console") else 0
+        s.found("Entrust") if s.inBody('content="Entrust SSM') else 0
+        s.found("Under Construction") if s.inBody("does not currently have a default page") and s.inBody("Under Construction") else 0
+        s.found("Barracuda Web Filter") if s.inBody("Barracuda Networks") and s.inBody("Web Filter") else 0
+        s.found("Tripwire") if s.inBody("console/app.showApp.cmd") and s.inBody("Tripwire") else 0
+        s.found("SolarWinds Orion") if s.inBody("SolarWinds Orion") or s.inBody("orionmaster.js.i18n.ashx") else 0
+        s.found("Cisco ASDM") if s.inBody("Cisco ASDM") and s.inBody("startup.jnlp") else 0
+        s.found("Red Hat Satellite") if s.inBody("Red Hat Satellite") and s.inBody("rhn-base.css") else 0
+        s.found("DELL On Board Remote Management") if s.inBody("On Board Remote Management") and s.inBody("status.html") else 0
+        s.found("Lansweeper") if s.inBody("Lansweeper") and s.inBody("lansweeper.js.aspx") else 0
+        s.found("Raritan Dominion KX II (KVM)") if s.inBody("Raritan") and s.inBody("Dominion KX II") else 0
+        s.found("HP iLO") if s.inBody("Hewlett-Packard") and s.inBody("iLO") else 0
+        s.found("ArcSight Management Center") if s.inBody("<title>ArcSight Management Center</title>") else 0
+        s.found("IIS Windows Server 8.5") if s.inBody("<title>IIS Windows Server</title>") and s.inBody("iis-85.png") else 0
+        s.found("PowerEdge R420 iDRAC") if s.inBody("PowerEdge R420") and s.inBody("idrac") else 0
+        s.found("Dell PowerVault TL4000 Tape Library") if s.inBody("<title>Dell PowerVault TL4000 Tape Library</title>") and s.inBody("RMULogin") else 0
+        s.found("Codian ISDN") if s.inBody("<title>Codian ISDN") else 0
+        s.found("BIG-IP Configuration Utility") if s.inBody("BIG-IP") and s.inBody("Configuration Utility") else 0
+        s.found("iDRAC 8") if s.inBody("iDRAC8 - Login</title>") else 0
+        s.found("Cisco Secure ACS") if s.inBody("<title>Cisco Secure ACS Login</title>") else 0
+        s.found("Cisco Integrated Management Controller") if s.inBody("<title>Cisco Integrated Management Controller Login</title>") else 0
+        s.found("Snap Server") if s.inUrl("/sadmin/GetLogin.event") else 0
+        s.found("Palo Alto GlobalProtect Portal") if s.inBody("GlobalProtect Portal") else 0
+
+    def probe(self,protocol,host,port):
+        self.url = protocol+"://"+host+":"+port
+        self.probeUrl()
+
+    def probeUrl(self):
+        #print "[*] Probing " + url
+        # automatically follows 3xx
+        # disable SSL validation
+        h = getHttpLib()
+        try:
+            self.resp, self.respdata = h.request(self.url)
+            if self.resp.status == 200:
+                #print "[!] Got 200. profiling..."
+                #profile(url,resp,content)
+                #evalRules(url,resp,content)
+                if args.debug:
+                    print(self.resp)
+                    print(self.respdata)
+                self.evalRules()
+                if self.didFind == False:
+                    output(self.url, "No Signature Match")
+                else:
+                    self.didFind = False
+            else:
+                error("Got response code " + str(self.resp.status) + " from " + self.url)
+        except httplib2.SSLHandshakeError as e:
+            error("Could create SSL connection to " + self.url)
+        except socket.error as e:
+            error("Could not open socket to " + self.url)
+        except httplib2.RelativeURIError as e:
+            error("Only absolute URIs are allowed (" + self.url + ")") 
+        except httplib2.RedirectLimit as e:
+            error("Redirected more times than rediection_limit allows (" + self.url + ")")
+        except:
+            e = sys.exc_info()[0]
+            error(str(e) + " (" + self.url + ")")
+            if args.debug:
+                traceback.print_tb(sys.exc_info()[2])
 
 def parse():
     #loadRules(args)
@@ -135,22 +177,35 @@ def parse():
     if args.fqdn:
         warn('Using DNS mode. Script will search for user provided hostnames in output.')
         warn('If you did not manually specify hostnames in your scan input, this might fail.')
-    
-    if(args.nmap):
-        parseNmap()
-    elif(args.listfile):
-        parseList()
-    elif(args.url):
-        global url
-        url = args.url
-        probeUrl()
-    elif(args.nessus):
-        parseNessus()
 
-# TODO - Seem to get dups from this nessus parsing. Need to uniq the results.
+    if(args.nmap):
+        hosts = parseNmap()
+        probeHosts(hosts)
+    elif(args.listfile):
+        hosts = parseList()
+        probeHosts(hosts)
+    elif(args.url):
+        p = Probe()
+        p.url = args.url
+        p.probeUrl()
+    elif(args.nessus):
+        hosts = parseNessus()
+        probeHosts(hosts)
+
+def probeHosts(hosts):
+    for h in hosts:
+        p = Probe()
+        p.probe(h['method'],h['host'],h['port'])
+
+    # TODO -- uniq hosts
+    # TODO -- threads
+    # TODO probe.probeUrls(hosts)
+    # TODO -- spider, dir bust, CVE checks, cache output
+
 def parseNessus():
     tree = ET.parse( args.nessus)
     root = tree.getroot().find('Report')
+    hosts = []
     
     for host in root.findall('ReportHost'):
         fqdn = ""
@@ -172,15 +227,20 @@ def parseNessus():
                         #print ipaddr, item.get('port')
                         thehost = ipaddr
                     if port == '80':
-                        probe("http",thehost,port)
+                        hosts.append({'method':'http', 'host':theHost, 'port':port})
+                        #probe("http",thehost,port)
                     elif port == '443':
-                        probe("https",thehost,port)
+                        hosts.append({'method':'https', 'host':theHost, 'port':port})
+                        #probe("https",thehost,port)
                     else:
-                        probe("http",thehost,port) # WE HOPE!
+                        hosts.append({'method':'http', 'host':theHost, 'port':port}) # WE HOPE!
+                        #probe("http",thehost,port) # WE HOPE!
+    return hosts
 
 def parseNmap():
     tree = ET.parse( args.nmap )
     root = tree.getroot()
+    hosts = []
     
     for host in root.findall('host'):
         addr = None
@@ -196,60 +256,26 @@ def parseNmap():
                 if port.find('state').get('state') == 'open':
                     if port.find('service') != None:
                         if port.find('service').get('name') == 'http':
-                            probe("http",addr,portid) 
+                            hosts.append({'method':'http', 'host':addr, 'port':portid})
+                            #probe("http",addr,portid) 
                         if port.find('service').get('name') == 'https':
-                            probe("https",addr,portid) 
+                            hosts.append({'method':'https', 'host':addr, 'port':portid})
+                            #probe("https",addr,portid) 
+    return hosts
         
+# TODO --better parsing?
 def parseList():
-    global url
     urls = args.listfile.readlines()
+    hosts = []
     for urln in urls:
         url = urln.rstrip()
-        probeUrl()
+        hosts.append(url)
+        #probeUrl()
+    return hosts
 
 def getHttpLib():
     return httplib2.Http(".cache", disable_ssl_certificate_validation=True, timeout=5)
 
-def probe(protocol,host,port):
-    global url
-    url = protocol+"://"+host+":"+port
-    probeUrl()
-
-def probeUrl():
-    global url, resp, respdata, didFind
-    #print "[*] Probing " + url
-    # automatically follows 3xx
-    # disable SSL validation
-    h = getHttpLib()
-    try:
-        resp, respdata = h.request(url)
-        if resp.status == 200:
-            #print "[!] Got 200. profiling..."
-            #profile(url,resp,content)
-            #evalRules(url,resp,content)
-            if args.debug:
-                print(resp)
-                print(respdata)
-            evalRules()
-            if didFind == False:
-                output(url, "No Signature Match")
-            else:
-                didFind = False
-        else:
-            error("Got response code " + str(resp.status) + " from " + url)
-    except httplib2.SSLHandshakeError as e:
-        error("Could create SSL connection to " + url)
-    except socket.error as e:
-        error("Could not open socket to " + url)
-    except httplib2.RelativeURIError as e:
-        error("Only absolute URIs are allowed (" + url + ")") 
-    except httplib2.RedirectLimit as e:
-        error("Redirected more times than rediection_limit allows (" + url + ")")
-    except:
-        e = sys.exc_info()[0]
-        error(str(e) + " (" + url + ")")
-        if args.debug:
-            traceback.print_tb(sys.exc_info()[2])
 
 # may add some of this functionality back in for deeper probing (dir buster style)
 # also used old rules lang
