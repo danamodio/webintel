@@ -5,7 +5,6 @@
 # Profiles web enabled services 
 #
 
-
 from __future__ import print_function
 import sys
 import traceback
@@ -14,18 +13,31 @@ import base64
 import xml.etree.ElementTree as ET
 import httplib2
 import socket
+import thread
+import threading
+import Queue
+import time
 
 reload(sys)  
 sys.setdefaultencoding('utf8')
 
 # GLOBALS
 args = None
+#threadLock = threading.Lock()
+threads = []
+exitFlag = False
+qlock = threading.Lock()
+qhosts = Queue.Queue()
 
 def warn(*objs):
     print("[*] WARNING: ", *objs, file=sys.stderr)
 
 def error(*objs):
     print("[!] ERROR: ", *objs, file=sys.stderr)
+
+def debug(*objs):
+    if args.debug:
+        print("[*] DEBUG: ", *objs, file=sys.stderr)
 
 def output(url, signature):
     if args.output == "default":
@@ -35,13 +47,17 @@ def output(url, signature):
     elif args.output == "xml":
         print("<item><url>" + url + "</url><match>" + signature + "</match></item>")
 
+def getHttpLib():
+    return httplib2.Http(".cache", disable_ssl_certificate_validation=True, timeout=5)
+
 # Probing class
-class Probe:
+class Probe (threading.Thread):
     def __init__(self):
         self.url = None 
         self.resp = None
         self.respdata = None
         self.didFind = False
+        self.urlFormat = False
 
     def inBody(self, test):
         return True if self.respdata.find(test)>-1 else False
@@ -180,30 +196,69 @@ def parse():
 
     if(args.nmap):
         hosts = parseNmap()
-        probeHosts(hosts)
+        probeHosts(hosts, args.threads)
     elif(args.listfile):
         hosts = parseList()
-        for h in hosts:
-            p = Probe()
-            p.url = h
-            p.probeUrl()
+        probeHosts(hosts, args.threads, True)
     elif(args.url):
         p = Probe()
         p.url = args.url
         p.probeUrl()
     elif(args.nessus):
         hosts = parseNessus()
-        probeHosts(hosts)
+        probeHosts(hosts, args.threads)
 
-def probeHosts(hosts):
+def probeHosts(hosts, numThreads=1, urlFormat=False):
+    global qlock, qhosts, threads, exitFlag
+    # add to queue
+    # spawn workers
+    for tid in range(1, numThreads+1):
+        #thread = ProbeThread(tid, qhosts, urlFormat)
+        debug("Starting Thread-{}".format(tid))
+        thread = threading.Thread(target=process_requests, args=(tid, urlFormat,))
+        thread.start()
+        threads.append(thread)
+
+    qlock.acquire()
     for h in hosts:
-        p = Probe()
-        p.probe(h['method'],h['host'],h['port'])
+        qhosts.put(h)
+    qlock.release()
+
+    # wait
+    while not qhosts.empty():
+        pass
+
+    debug("All hosts completed. Should exit now...")
+    exitFlag = True #done
+
+    # Wait for all threads to complete
+    for t in threads:
+        t.join()
 
     # TODO -- uniq hosts
     # TODO -- threads
     # TODO probe.probeUrls(hosts)
     # TODO -- spider, dir bust, CVE checks, cache output
+
+# Threading method
+def process_requests(threadID, urlFormat):
+    while not exitFlag:
+        qlock.acquire()
+        if not qhosts.empty():
+            h = qhosts.get()
+            qlock.release()
+            debug( "Thread-{} : processing {}".format(threadID, h) )
+            p = Probe()
+            if urlFormat is True:
+                p.url = h
+                p.probeUrl()
+            else:
+                p.probe(h['method'],h['host'],h['port'])
+        else:
+            debug("Thread-{} : queue empty... exitFlag: {}".format(threadID, exitFlag))
+            qlock.release()
+        time.sleep(1)
+
 
 def parseNessus():
     tree = ET.parse( args.nessus)
@@ -276,8 +331,6 @@ def parseList():
         #probeUrl()
     return hosts
 
-def getHttpLib():
-    return httplib2.Http(".cache", disable_ssl_certificate_validation=True, timeout=5)
 
 
 # may add some of this functionality back in for deeper probing (dir buster style)
@@ -328,6 +381,7 @@ def main(argv):
     #parser.add_argument('--ports', type=str, default='80,8080,8081,8000,9000,443,8443', required=False, help='the ports to scan for web services. e.g. 80,8080,443') # just use NMAP
     parser.add_argument('--fqdn', default=False, action="store_true", help='Use the fully qualified domain name from scanner output (DNS). Pretty important if doing this over the internet due to how some shared hosting services route.')
     parser.add_argument('--debug', default=False, action="store_true", help="Print the response data.")
+    parser.add_argument('--threads', default=1, type=int, help='Number of concurrent request threads.')
     #parser.add_argument('--rules',default='rules',type=file,required=False,help='the rules file')
     #parser.add_argument('--nofollowup', default=False, action="store_true", help='disable sending followup requests to a host, like /wp-login.php.') # I want to avoid doing this at all with this script.
 
