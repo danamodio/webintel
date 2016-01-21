@@ -183,7 +183,10 @@ def parse():
         probeHosts(hosts)
     elif(args.listfile):
         hosts = parseList()
-        probeHosts(hosts)
+        for h in hosts:
+            p = Probe()
+            p.url = h
+            p.probeUrl()
     elif(args.url):
         p = Probe()
         p.url = args.url
