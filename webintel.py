@@ -285,13 +285,13 @@ def parseNessus():
                         #print ipaddr, item.get('port')
                         thehost = ipaddr
                     if port == '80':
-                        hosts.append({'method':'http', 'host':theHost, 'port':port})
+                        hosts.append({'method':'http', 'host':thehost, 'port':port})
                         #probe("http",thehost,port)
                     elif port == '443':
-                        hosts.append({'method':'https', 'host':theHost, 'port':port})
+                        hosts.append({'method':'https', 'host':thehost, 'port':port})
                         #probe("https",thehost,port)
                     else:
-                        hosts.append({'method':'http', 'host':theHost, 'port':port}) # WE HOPE!
+                        hosts.append({'method':'http', 'host':thehost, 'port':port}) # WE HOPE!
                         #probe("http",thehost,port) # WE HOPE!
     return hosts
 
