@@ -97,7 +97,7 @@ class Probe (threading.Thread):
         s.found("Mediawiki") if s.inBody("wiki/Main_Page") or s.inBody("wiki/Special:") or s.inBody("wiki/File:") or s.inBody("poweredby_mediawiki") else 0
         s.found("Thycotic Secret Server") if s.inBody("Thycotic Secret Server") else 0
         s.found("Directory Listing") if s.inBody("Index of") or s.inBody("Parent Directory") else 0
-        s.found("Junos Pulse") if s.inBody("dana-na") and s.inBody("Junos Pulse") else 0
+        s.found("Junos Pulse") if s.inBody("dana-na") else 0
         s.found("Default Tomcat Homepage") if s.inBody("this is the default Tomcat home page") else 0
         s.found("Quest Password Manager") if s.inBody("Quest Password Manager") else 0
         s.found("FogBugz") if s.inBody("FogBugz") and s.inBody("fogbugz.stackexchange.com") else 0
