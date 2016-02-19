@@ -144,6 +144,7 @@ class Probe (threading.Thread):
         s.found("Cisco Integrated Management Controller") if s.inBody("<title>Cisco Integrated Management Controller Login</title>") else 0
         s.found("Snap Server") if s.inUrl("/sadmin/GetLogin.event") else 0
         s.found("Palo Alto GlobalProtect Portal") if s.inBody("GlobalProtect Portal") else 0
+        s.found("Demandware") if s.inBody("demandware.edgesuite") else 0
 
     def probe(self,protocol,host,port):
         self.url = protocol+"://"+host+":"+port
