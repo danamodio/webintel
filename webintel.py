@@ -145,6 +145,7 @@ class Probe (threading.Thread):
         s.found("Snap Server") if s.inUrl("/sadmin/GetLogin.event") else 0
         s.found("Palo Alto GlobalProtect Portal") if s.inBody("GlobalProtect Portal") else 0
         s.found("Demandware") if s.inBody("demandware.edgesuite") else 0
+        s.found("McAfee Agent Activity Log") if s.inBody("AgentGUID") and s.inBody("Log") else 0
 
     def probe(self,protocol,host,port):
         self.url = protocol+"://"+host+":"+port
@@ -156,21 +157,26 @@ class Probe (threading.Thread):
         # disable SSL validation
         h = getHttpLib()
         try:
-            self.resp, self.respdata = h.request(self.url)
-            if self.resp.status == 200:
-                #print "[!] Got 200. profiling..."
-                #profile(url,resp,content)
-                #evalRules(url,resp,content)
-                if args.debug:
-                    print(self.resp)
-                    print(self.respdata)
-                self.evalRules()
-                if self.didFind == False:
-                    output(self.url, "No Signature Match")
-                else:
-                    self.didFind = False
+            if args.uri: # URI scan mode .. no fingerprint
+                self.url = self.url + args.uri
+                self.resp, self.respdata = h.request(self.url)
+                output(self.url, str(self.resp.status))
             else:
-                error("Got response code " + str(self.resp.status) + " from " + self.url)
+                self.resp, self.respdata = h.request(self.url)
+                if self.resp.status == 200:
+                    #print "[!] Got 200. profiling..."
+                    #profile(url,resp,content)
+                    #evalRules(url,resp,content)
+                    if args.debug:
+                        print(self.resp)
+                        print(self.respdata)
+                    self.evalRules()
+                    if self.didFind == False:
+                        output(self.url, "No Signature Match")
+                    else:
+                        self.didFind = False
+                else:
+                    error("Got response code " + str(self.resp.status) + " from " + self.url)
         except httplib2.SSLHandshakeError as e:
             error("Could create SSL connection to " + self.url)
         except socket.error as e:
@@ -385,6 +391,9 @@ def main(argv):
     parser.add_argument('--threads', default=1, type=int, help='Number of concurrent request threads.')
     #parser.add_argument('--rules',default='rules',type=file,required=False,help='the rules file')
     #parser.add_argument('--nofollowup', default=False, action="store_true", help='disable sending followup requests to a host, like /wp-login.php.') # I want to avoid doing this at all with this script.
+    # --fingerprint (default)
+    parser.add_argument('--uri', type=str, required=False, help='get status code for a URI across all inputs. e.g. /Trace.axd')
+    
 
     if len(argv) == 0:
         parser.print_help()
