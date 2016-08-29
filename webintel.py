@@ -146,6 +146,7 @@ class Probe (threading.Thread):
         s.found("Palo Alto GlobalProtect Portal") if s.inBody("GlobalProtect Portal") else 0
         s.found("Demandware") if s.inBody("demandware.edgesuite") else 0
         s.found("McAfee Agent Activity Log") if s.inBody("AgentGUID") and s.inBody("Log") else 0
+        s.found("Rails") if s.inBody("assets/javascripts") or s.inBody("assets/stylesheets") else 0
 
     def probe(self,protocol,host,port):
         self.url = protocol+"://"+host+":"+port
