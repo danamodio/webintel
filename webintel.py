@@ -11,6 +11,7 @@ import traceback
 import argparse
 import base64
 import xml.etree.ElementTree as ET
+from HTMLParser import HTMLParser
 import httplib2
 import socket
 import thread
@@ -27,6 +28,7 @@ args = None
 threads = []
 exitFlag = False
 qlock = threading.Lock()
+olock = threading.Lock()
 qhosts = Queue.Queue()
 
 def warn(*objs):
@@ -41,6 +43,24 @@ def debug(*objs):
 
 def getHttpLib():
     return httplib2.Http(".cache", disable_ssl_certificate_validation=True, timeout=5)
+    
+# HTML parser to read title tag
+class TitleParser(HTMLParser):
+    def __init__(self):
+        self.tag = [None]
+        self.title = None
+        HTMLParser.__init__(self)
+        
+    def handle_starttag(self, tag, attrs):
+        self.tag.append(tag)
+
+    def handle_endtag(self, tag):
+        self.tag.pop()
+
+    def handle_data(self, data):
+        tag = self.tag[-1] # peek at tag context
+        if tag == "title":
+            self.title = data
 
 # Probing class
 class Probe (threading.Thread):
@@ -52,12 +72,15 @@ class Probe (threading.Thread):
         self.urlFormat = False
         
     def out(self, data):
+        global olock
+        olock.acquire()
         if args.output == "default":
             print( "[{status}][{length}] {url} : {data}".format(status=str(self.resp.status), length=str(len(self.respdata)), url=self.url, data=data) )
         elif args.output == "csv":
             print(url + ", " + data)
         elif args.output == "xml":
             print("<item><url>" + url + "</url><data>" + data + "</data></item>")
+        olock.release()
 
     def inBody(self, test):
         return True if self.respdata.find(test)>-1 else False
@@ -152,6 +175,9 @@ class Probe (threading.Thread):
         s.found("WWW-Authenticate: {}".format(authn)) if authn else 0
         poweredb = s.resp.get('x-powered-by', '')
         s.found(poweredb) if poweredb else 0
+        tp = TitleParser()
+        tp.feed(s.respdata)
+        s.found("Title: {}".format(tp.title.replace("\n","").lstrip(" ").rstrip(" "))) if tp.title else 0
         
 
     def probe(self,protocol,host,port):
