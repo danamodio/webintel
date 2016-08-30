@@ -73,9 +73,12 @@ class Probe (threading.Thread):
         
     def out(self, data):
         global olock
+        tp = TitleParser()
+        tp.feed(self.respdata)
+        title = ("{}".format(tp.title.replace("\n","").replace("\r","").lstrip(" ").rstrip(" "))) if tp.title else ""
         olock.acquire()
         if args.output == "default":
-            print( "[{status}][{length}] {url} : {data}".format(status=str(self.resp.status), length=str(len(self.respdata)), url=self.url, data=data) )
+            print( "[{status}][{length}] {url} : {data} : {title}".format(status=str(self.resp.status), length=str(len(self.respdata)), url=self.url, data=data, title=title) )
         elif args.output == "csv":
             print(url + ", " + data)
         elif args.output == "xml":
@@ -175,9 +178,6 @@ class Probe (threading.Thread):
         s.found("WWW-Authenticate: {}".format(authn)) if authn else 0
         poweredb = s.resp.get('x-powered-by', '')
         s.found(poweredb) if poweredb else 0
-        tp = TitleParser()
-        tp.feed(s.respdata)
-        s.found("Title: {}".format(tp.title.replace("\n","").lstrip(" ").rstrip(" "))) if tp.title else 0
         
 
     def probe(self,protocol,host,port):
