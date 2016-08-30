@@ -192,7 +192,10 @@ class Probe (threading.Thread):
         try:
             if args.uri: # URI scan mode ..
                 self.url = self.url + args.uri
-            self.resp, self.respdata = h.request(self.url)
+            if args.dav:
+                self.resp, self.respdata = h.request(self.url, "PROPFIND", "<D:propfind xmlns:D='DAV:'><D:prop><D:displayname/></D:prop></D:propfind>")
+            else:
+                self.resp, self.respdata = h.request(self.url)
             if args.debug:
                 print(self.resp)
                 print(self.respdata)
@@ -411,6 +414,7 @@ def main(argv):
     #parser.add_argument('--nofollowup', default=False, action="store_true", help='disable sending followup requests to a host, like /wp-login.php.') # I want to avoid doing this at all with this script.
     # --fingerprint (default)
     parser.add_argument('--uri', type=str, required=False, help='get status code for a URI across all inputs. e.g. /Trace.axd')
+    parser.add_argument('--dav', default=False, action="store_true", help="finger WebDav with a PROPFIND request.")
     
 
     if len(argv) == 0:
