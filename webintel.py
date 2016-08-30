@@ -39,14 +39,6 @@ def debug(*objs):
     if args.debug:
         print("[*] DEBUG: ", *objs, file=sys.stderr)
 
-def output(url, signature):
-    if args.output == "default":
-        print("[!] " + url + " : " + signature)
-    elif args.output == "csv":
-        print(url + ", " + signature)
-    elif args.output == "xml":
-        print("<item><url>" + url + "</url><match>" + signature + "</match></item>")
-
 def getHttpLib():
     return httplib2.Http(".cache", disable_ssl_certificate_validation=True, timeout=5)
 
@@ -58,6 +50,14 @@ class Probe (threading.Thread):
         self.respdata = None
         self.didFind = False
         self.urlFormat = False
+        
+    def out(self, data):
+        if args.output == "default":
+            print( "[{status}][{length}] {url} : {data}".format(status=str(self.resp.status), length=str(len(self.respdata)), url=self.url, data=data) )
+        elif args.output == "csv":
+            print(url + ", " + data)
+        elif args.output == "xml":
+            print("<item><url>" + url + "</url><data>" + data + "</data></item>")
 
     def inBody(self, test):
         return True if self.respdata.find(test)>-1 else False
@@ -72,7 +72,7 @@ class Probe (threading.Thread):
 
     def found(self, signature):
         self.didFind = True
-        output(self.url, signature)
+        self.out(signature)
 
     # https://en.wikipedia.org/wiki/%3F:#Python
     def evalRules(s):
@@ -147,6 +147,12 @@ class Probe (threading.Thread):
         s.found("Demandware") if s.inBody("demandware.edgesuite") else 0
         s.found("McAfee Agent Activity Log") if s.inBody("AgentGUID") and s.inBody("Log") else 0
         s.found("Rails") if s.inBody("assets/javascripts") or s.inBody("assets/stylesheets") else 0
+        # always print server header. TODO make this cleaner
+        server = s.resp.get('server','')
+        s.found(server) if server else 0
+        authn = s.resp.get('www-authenticate','')
+        s.found("WWW-Authenticate: {}".format(authn)) if authn else 0
+        
 
     def probe(self,protocol,host,port):
         self.url = protocol+"://"+host+":"+port
@@ -158,26 +164,17 @@ class Probe (threading.Thread):
         # disable SSL validation
         h = getHttpLib()
         try:
-            if args.uri: # URI scan mode .. no fingerprint
+            if args.uri: # URI scan mode ..
                 self.url = self.url + args.uri
-                self.resp, self.respdata = h.request(self.url)
-                output(self.url, str(self.resp.status))
+            self.resp, self.respdata = h.request(self.url)
+            if args.debug:
+                print(self.resp)
+                print(self.respdata)
+            self.evalRules()
+            if self.didFind == False:
+                self.out("No Signature Match")
             else:
-                self.resp, self.respdata = h.request(self.url)
-                if self.resp.status == 200:
-                    #print "[!] Got 200. profiling..."
-                    #profile(url,resp,content)
-                    #evalRules(url,resp,content)
-                    if args.debug:
-                        print(self.resp)
-                        print(self.respdata)
-                    self.evalRules()
-                    if self.didFind == False:
-                        output(self.url, "No Signature Match")
-                    else:
-                        self.didFind = False
-                else:
-                    error("Got response code " + str(self.resp.status) + " from " + self.url)
+                self.didFind = False
         except httplib2.SSLHandshakeError as e:
             error("Could create SSL connection to " + self.url)
         except socket.error as e:
@@ -193,15 +190,9 @@ class Probe (threading.Thread):
                 traceback.print_tb(sys.exc_info()[2])
 
 def parse():
-    #loadRules(args)
-    if args.output == "default":
-        print("[*] Starting Web Intel scanner -- by Dan Amodio")
-        print("[*] This script attempts to identify common CMS and web applications with a single request.")
-        print("[*]")
     if args.fqdn:
         warn('Using DNS mode. Script will search for user provided hostnames in output.')
         warn('If you did not manually specify hostnames in your scan input, this might fail.')
-
     if(args.nmap):
         hosts = parseNmap()
         probeHosts(hosts, args.threads)
@@ -379,7 +370,7 @@ def parseList():
 
 def main(argv):
     filename = ""
-    parser = argparse.ArgumentParser(description='Shakedown webservices for known CMS and technology stacks. ')
+    parser = argparse.ArgumentParser(description='Shakedown webservices for known CMS and technology stacks - @DanAmodio')
     parser.add_argument('--nmap', type=file, help='nmap xml file.')
     parser.add_argument('--nessus', type=file, help='.nessus xml file.')
     parser.add_argument('--listfile', type=file, help='straight file list containing fully qualified urls.')
