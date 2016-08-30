@@ -88,7 +88,6 @@ class Probe (threading.Thread):
         s.found("IIS8 Welcome Page") if s.inBody("Microsoft Internet Information Services 8.0") and s.inBody("ws8-brand.png") else 0
         s.found("Citrix") if s.inBody("Citrix Systems") and s.inBody("vpn/") else 0
         s.found("Citrix") if s.inBody("/Citrix/SecureGateway") else 0
-        s.found("Citrix Web PN") if s.inHeader("server","Citrix Web PN") else 0
         s.found("Outlook Web App") if s.inBody("Outlook Web App") else 0
         s.found("MobileIron") if s.inBody("MobileIron") else 0
         s.found("VMware Horizon") if s.inBody("VMware Horizon") and s.inBody("connect to your desktop and applications") else 0
@@ -102,7 +101,6 @@ class Probe (threading.Thread):
         s.found("Quest Password Manager") if s.inBody("Quest Password Manager") else 0
         s.found("FogBugz") if s.inBody("FogBugz") and s.inBody("fogbugz.stackexchange.com") else 0
         s.found("WebSphere 6.1") if s.inBody("IBM HTTP Server") and s.inBody("infocenter/wasinfo/v6r1") else 0
-        s.found("Tomcat / JBOSS") if s.inHeader("server","Apache-Coyote") else 0
         s.found("Default Glassfish Homepage") if s.inBody("GlassFish Server") and s.inBody("Your server is now running") else 0
         s.found("MobileGuard") if s.inBody("MobileGuard Compliance Home Page") else 0
         s.found("SAP Business Objects") if s.inUrl("BOE/BI") and s.inBody("servletBridgeIframe") else 0 # http://www.cvedetails.com/vulnerability-list/vendor_id-797/product_id-20077/SAP-Businessobjects.html
@@ -152,6 +150,8 @@ class Probe (threading.Thread):
         s.found(server) if server else 0
         authn = s.resp.get('www-authenticate','')
         s.found("WWW-Authenticate: {}".format(authn)) if authn else 0
+        poweredb = s.resp.get('x-powered-by', '')
+        s.found(poweredb) if poweredb else 0
         
 
     def probe(self,protocol,host,port):
