@@ -28,18 +28,19 @@ args = None
 threads = []
 exitFlag = False
 qlock = threading.Lock()
-olock = threading.Lock()
 qhosts = Queue.Queue()
 
 def warn(*objs):
-    print("[*] WARNING: ", *objs, file=sys.stderr)
+    print("[*][WARNING]: ", *objs, file=sys.stderr)
+
 
 def error(*objs):
-    print("[!] ERROR: ", *objs, file=sys.stderr)
+    print("[!][ERROR]: ", *objs)
 
 def debug(*objs):
     if args.debug:
-        print("[*] DEBUG: ", *objs, file=sys.stderr)
+        #print("[*] DEBUG: ", *objs, file=sys.stderr)
+        print("[*][DEBUG]: ", *objs)
 
 def getHttpLib():
     return httplib2.Http(".cache", disable_ssl_certificate_validation=True, timeout=5)
@@ -72,18 +73,16 @@ class Probe (threading.Thread):
         self.urlFormat = False
         
     def out(self, data):
-        global olock
         tp = TitleParser()
         tp.feed(self.respdata)
         title = ("{}".format(tp.title.replace("\n","").replace("\r","").lstrip(" ").rstrip(" "))) if tp.title else ""
-        olock.acquire()
         if args.output == "default":
             print( "[{status}][{length}] {url} : {data} : {title}".format(status=str(self.resp.status), length=str(len(self.respdata)), url=self.url, data=data, title=title) )
         elif args.output == "csv":
             print(url + ", " + data)
         elif args.output == "xml":
             print("<item><url>" + url + "</url><data>" + data + "</data></item>")
-        olock.release()
+        sys.stdout.flush()
 
     def inBody(self, test):
         return True if self.respdata.find(test)>-1 else False
@@ -171,6 +170,7 @@ class Probe (threading.Thread):
         s.found("Demandware") if s.inBody("demandware.edgesuite") else 0
         s.found("McAfee Agent Activity Log") if s.inBody("AgentGUID") and s.inBody("Log") else 0
         s.found("Rails") if s.inBody("assets/javascripts") or s.inBody("assets/stylesheets") else 0
+        s.found("Sharepoint") if s.inHeader("MicrosoftSharePointTeamServices", ".") else 0
         # always print server header. TODO make this cleaner
         server = s.resp.get('server','')
         s.found(server) if server else 0
@@ -252,12 +252,15 @@ def probeHosts(hosts, numThreads=1, urlFormat=False):
         qhosts.put(h)
     qlock.release()
 
-    # wait
-    while not qhosts.empty():
-        pass
+    try:
+        # wait
+        while not qhosts.empty():
+            time.sleep(.1)
+        exitFlag = True
+    except KeyboardInterrupt:
+        exitFlag = True
 
     debug("All hosts completed. Should exit now...")
-    exitFlag = True #done
 
     # Wait for all threads to complete
     for t in threads:
@@ -267,6 +270,7 @@ def probeHosts(hosts, numThreads=1, urlFormat=False):
     # TODO -- threads
     # TODO probe.probeUrls(hosts)
     # TODO -- spider, dir bust, CVE checks, cache output
+    # TODO -- cookies
 
 # Threading method
 def process_requests(threadID, urlFormat):
@@ -314,13 +318,10 @@ def parseNessus():
                         thehost = ipaddr
                     if port == '80':
                         hosts.append({'method':'http', 'host':thehost, 'port':port})
-                        #probe("http",thehost,port)
                     elif port == '443':
                         hosts.append({'method':'https', 'host':thehost, 'port':port})
-                        #probe("https",thehost,port)
                     else:
                         hosts.append({'method':'http', 'host':thehost, 'port':port}) # WE HOPE!
-                        #probe("http",thehost,port) # WE HOPE!
     return hosts
 
 def parseNmap():
@@ -343,10 +344,8 @@ def parseNmap():
                     if port.find('service') != None:
                         if port.find('service').get('name') == 'http':
                             hosts.append({'method':'http', 'host':addr, 'port':portid})
-                            #probe("http",addr,portid) 
                         if port.find('service').get('name') == 'https':
                             hosts.append({'method':'https', 'host':addr, 'port':portid})
-                            #probe("https",addr,portid) 
     return hosts
         
 # TODO --better parsing?
@@ -356,10 +355,7 @@ def parseList():
     for urln in urls:
         url = urln.rstrip()
         hosts.append(url)
-        #probeUrl()
     return hosts
-
-
 
 # may add some of this functionality back in for deeper probing (dir buster style)
 # also used old rules lang
@@ -415,7 +411,8 @@ def main(argv):
     # --fingerprint (default)
     parser.add_argument('--uri', type=str, required=False, help='get status code for a URI across all inputs. e.g. /Trace.axd')
     parser.add_argument('--dav', default=False, action="store_true", help="finger WebDav with a PROPFIND request.")
-    
+    # TODO - http://stackoverflow.com/questions/7689941/how-can-i-retrieve-the-tls-ssl-peer-certificate-of-a-remote-host-using-python
+    # http://stackoverflow.com/questions/30862099/how-can-i-get-certificate-issuer-information-in-python
 
     if len(argv) == 0:
         parser.print_help()
