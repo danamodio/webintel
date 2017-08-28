@@ -18,6 +18,7 @@ import thread
 import threading
 import Queue
 import time
+import ssl, OpenSSL
 
 reload(sys)  
 sys.setdefaultencoding('utf8')
@@ -181,6 +182,9 @@ class Probe (threading.Thread):
         
 
     def probe(self,protocol,host,port):
+        self.protocol = protocol
+        self.host = host
+        self.port = port
         self.url = protocol+"://"+host+":"+port
         self.probeUrl()
 
@@ -192,8 +196,19 @@ class Probe (threading.Thread):
         try:
             if args.uri: # URI scan mode ..
                 self.url = self.url + args.uri
-            if args.dav:
+            elif args.dav:
                 self.resp, self.respdata = h.request(self.url, "PROPFIND", "<D:propfind xmlns:D='DAV:'><D:prop><D:displayname/></D:prop></D:propfind>")
+            elif args.cert:
+                if self.protocol == "https":
+                    cert = ssl.get_server_certificate((self.host, int(self.port)))
+                    x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert)
+                    comp = x509.get_subject().get_components()
+                    debug( comp )
+                    print( "[-] {url} : {cert}".format(url=self.url, cert=str( comp ) ))
+                    return
+                else:
+                    self.out("Not HTTPS")
+                    return
             else:
                 self.resp, self.respdata = h.request(self.url)
             if args.debug:
@@ -324,6 +339,7 @@ def parseNessus():
                         hosts.append({'method':'http', 'host':thehost, 'port':port}) # WE HOPE!
     return hosts
 
+
 def parseNmap():
     tree = ET.parse( args.nmap )
     root = tree.getroot()
@@ -344,7 +360,13 @@ def parseNmap():
                     if port.find('service') != None:
                         if port.find('service').get('name') == 'http':
                             hosts.append({'method':'http', 'host':addr, 'port':portid})
+                        if port.find('service').get('name') == 'http-proxy':
+                            hosts.append({'method':'http', 'host':addr, 'port':portid})
                         if port.find('service').get('name') == 'https':
+                            hosts.append({'method':'https', 'host':addr, 'port':portid})
+                        if port.find('service').get('name') == 'https-alt':
+                            hosts.append({'method':'https', 'host':addr, 'port':portid})
+                        if port.find('service').get('name') == 'tungsten-https':
                             hosts.append({'method':'https', 'host':addr, 'port':portid})
     return hosts
         
@@ -411,6 +433,7 @@ def main(argv):
     # --fingerprint (default)
     parser.add_argument('--uri', type=str, required=False, help='get status code for a URI across all inputs. e.g. /Trace.axd')
     parser.add_argument('--dav', default=False, action="store_true", help="finger WebDav with a PROPFIND request.")
+    parser.add_argument('--cert', default=False, action="store_true", help="Retrieve information from server certificate.")
     # TODO - http://stackoverflow.com/questions/7689941/how-can-i-retrieve-the-tls-ssl-peer-certificate-of-a-remote-host-using-python
     # http://stackoverflow.com/questions/30862099/how-can-i-get-certificate-issuer-information-in-python
 
