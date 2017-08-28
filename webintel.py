@@ -72,7 +72,6 @@ class Probe (threading.Thread):
         self.resp = None
         self.respdata = None
         self.didFind = False
-        self.urlFormat = False
         
     def out(self, data):
         tp = TitleParser()
@@ -180,11 +179,6 @@ class Probe (threading.Thread):
         s.found("WWW-Authenticate: {}".format(authn)) if authn else 0
         poweredb = s.resp.get('x-powered-by', '')
         s.found(poweredb) if poweredb else 0
-        
-
-    def probe(self,protocol,host,port):
-        self.url = protocol+"://"+host+":"+port
-        self.probeUrl()
 
     def probeUrl(self):
         #print "[*] Probing " + url
@@ -258,12 +252,18 @@ def probeHosts(hosts, numThreads=1, urlFormat=False):
     for tid in range(1, numThreads+1):
         #thread = ProbeThread(tid, qhosts, urlFormat)
         debug("Starting Thread-{}".format(tid))
-        thread = threading.Thread(target=process_requests, args=(tid, urlFormat,))
+        thread = threading.Thread(target=process_requests, args=(tid,))
         thread.start()
         threads.append(thread)
 
     qlock.acquire()
+    uhosts = set() # unique
     for h in hosts:
+        if urlFormat is True:
+            uhosts.add(h)
+        else:
+            uhosts.add("{method}://{host}:{port}".format(method=h['method'],host=h['host'],port=h['port']))
+    for h in uhosts:
         qhosts.put(h)
     qlock.release()
 
@@ -288,7 +288,7 @@ def probeHosts(hosts, numThreads=1, urlFormat=False):
     # TODO -- cookies
 
 # Threading method
-def process_requests(threadID, urlFormat):
+def process_requests(threadID):
     while not exitFlag:
         qlock.acquire()
         if not qhosts.empty():
@@ -296,11 +296,8 @@ def process_requests(threadID, urlFormat):
             qlock.release()
             debug( "Thread-{} : processing {}".format(threadID, h) )
             p = Probe()
-            if urlFormat is True:
-                p.url = h
-                p.probeUrl()
-            else:
-                p.probe(h['method'],h['host'],h['port'])
+            p.url = h
+            p.probeUrl()
         else:
             debug("Thread-{} : queue empty... exitFlag: {}".format(threadID, exitFlag))
             qlock.release()
