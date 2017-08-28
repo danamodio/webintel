@@ -19,6 +19,7 @@ import threading
 import Queue
 import time
 import ssl, OpenSSL
+from urlparse import urlparse
 
 reload(sys)  
 sys.setdefaultencoding('utf8')
@@ -182,9 +183,6 @@ class Probe (threading.Thread):
         
 
     def probe(self,protocol,host,port):
-        self.protocol = protocol
-        self.host = host
-        self.port = port
         self.url = protocol+"://"+host+":"+port
         self.probeUrl()
 
@@ -199,8 +197,10 @@ class Probe (threading.Thread):
             elif args.dav:
                 self.resp, self.respdata = h.request(self.url, "PROPFIND", "<D:propfind xmlns:D='DAV:'><D:prop><D:displayname/></D:prop></D:propfind>")
             elif args.cert:
-                if self.protocol == "https":
-                    cert = ssl.get_server_certificate((self.host, int(self.port)))
+                # have to parse URL even if sometimes protocol and port info is passed in.
+                parsed = urlparse(self.url)
+                if parsed.scheme == "https":
+                    cert = ssl.get_server_certificate((parsed.hostname, parsed.port ))
                     x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert)
                     comp = x509.get_subject().get_components()
                     debug( comp )
