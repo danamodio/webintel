@@ -78,7 +78,7 @@ class Probe (threading.Thread):
         tp.feed(self.respdata)
         title = ("{}".format(tp.title.replace("\n","").replace("\r","").lstrip(" ").rstrip(" "))) if tp.title else ""
         if args.output == "default":
-            print( "[{status}][{length}] {url} : {data} : {title}".format(status=str(self.resp.status), length=str(len(self.respdata)), url=self.url, data=data, title=title) )
+            print( "[{status}][{length}] {url} | {data} | {title}".format(status=str(self.resp.status), length=str(len(self.respdata)), url=self.url, data=data, title=title) )
         elif args.output == "csv":
             print(url + ", " + data)
         elif args.output == "xml":
@@ -198,7 +198,8 @@ class Probe (threading.Thread):
                     x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert)
                     comp = x509.get_subject().get_components()
                     debug( comp )
-                    print( "[-] {url} : {cert}".format(url=self.url, cert=str( comp ) ))
+                    nurl = "{method}://{host}:{port}".format(method=parsed.scheme, host=comp[-1][1], port=parsed.port)
+                    print( "[-] {url} | {cert} | {nurl}".format(url=self.url, cert=str( comp ), nurl=nurl ))
                     return
                 else:
                     self.out("Not HTTPS")
