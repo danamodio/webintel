@@ -193,12 +193,20 @@ class Probe (threading.Thread):
             elif args.cert:
                 # have to parse URL even if sometimes protocol and port info is passed in.
                 parsed = urlparse(self.url)
+                if args.debug:
+                    print("Parsed: {} {}".format(parsed.hostname,parsed.port))
                 if parsed.scheme == "https":
-                    cert = ssl.get_server_certificate((parsed.hostname, parsed.port ))
+                    cert = None
+                    port = None
+                    if parsed.port is None:
+                        port = 443
+                    else:
+                        parsed.port = 443
+                    cert = ssl.get_server_certificate((parsed.hostname, port ))
                     x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert)
                     comp = x509.get_subject().get_components()
                     debug( comp )
-                    nurl = "{method}://{host}:{port}".format(method=parsed.scheme, host=comp[-1][1], port=parsed.port)
+                    nurl = "{method}://{host}:{port}".format(method=parsed.scheme, host=comp[-1][1], port=port)
                     print( "[-] {url} | {cert} | {nurl}".format(url=self.url, cert=str( comp ), nurl=nurl ))
                     return
                 else:
@@ -216,12 +224,20 @@ class Probe (threading.Thread):
                 self.didFind = False
         except httplib2.SSLHandshakeError as e:
             error("Could create SSL connection to " + self.url)
+            if args.debug:
+                traceback.print_exc()
         except socket.error as e:
             error("Could not open socket to " + self.url)
+            if args.debug:
+                traceback.print_exc()
         except httplib2.RelativeURIError as e:
             error("Only absolute URIs are allowed (" + self.url + ")") 
+            if args.debug:
+                traceback.print_exc()
         except httplib2.RedirectLimit as e:
             error("Redirected more times than rediection_limit allows (" + self.url + ")")
+            if args.debug:
+                traceback.print_exc()
         except:
             e = sys.exc_info()[0]
             error(str(e) + " (" + self.url + ")")
