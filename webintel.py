@@ -80,7 +80,7 @@ class Probe (threading.Thread):
         if args.output == "default":
             print( "[{status}][{length}] {url} | {data} | {title}".format(status=str(self.resp.status), length=str(len(self.respdata)), url=self.url, data=data, title=title) )
         elif args.output == "csv":
-            print(url + ", " + data)
+            print( "{status}, {length}, {url}, {data}, {title}".format(status=str(self.resp.status), length=str(len(self.respdata)), url=self.url, data=data, title=title) )
         elif args.output == "xml":
             print("<item><url>" + url + "</url><data>" + data + "</data></item>")
         sys.stdout.flush()
@@ -188,6 +188,7 @@ class Probe (threading.Thread):
         try:
             if args.uri: # URI scan mode ..
                 self.url = self.url + args.uri
+                self.resp, self.respdata = h.request(self.url)
             elif args.dav:
                 self.resp, self.respdata = h.request(self.url, "PROPFIND", "<D:propfind xmlns:D='DAV:'><D:prop><D:displayname/></D:prop></D:propfind>")
             elif args.cert:
