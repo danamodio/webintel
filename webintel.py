@@ -183,6 +183,8 @@ class Probe (threading.Thread):
         s.found("Umbraco CMS") if s.inBody("/umbraco/") or s.inBody("Login - Umbraco") else 0
         s.found("PHPMyAdmin") if s.inBody("phpMyAdmin") and s.inBody("www.phpmyadmin.net") else 0
         s.found("Nagios") if s.inBody("Nagios Core") else 0
+        s.found("Oracle Middleware") if s.inBody("Welcome to Oracle Fusion Middleware") else 0
+        s.found("Oracle Reports") if s.inBody("Oracle Reports Services - Servlet") else 0
         
 
         # always print server header. TODO make this cleaner
