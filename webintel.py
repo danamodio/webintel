@@ -125,7 +125,7 @@ class Probe (threading.Thread):
         s.found("Directory Listing") if s.inBody("Index of") or s.inBody("Parent Directory") else 0
         s.found("Junos Pulse") if s.inBody("dana-na") else 0
         s.found("Default Tomcat Homepage") if s.inBody("this is the default Tomcat home page") else 0
-        s.found("Default Tomcat Homepage") if s.inBody("If you're seeing this, you've successfully installed Tomcat. Congratulations!") else 0 #tomcat7
+        s.found("Default Tomcat Homepage") if s.inBody("If you're seeing this, you've successfully installed Tomcat. Congratulations!") else 0 #tomcat7/8
         s.found("Default Tomcat Homepage w/ links to Tomcat Manager") if s.inBody("/manager/html") and s.inBody("/manager/status") else 0
         s.found("Quest Password Manager") if s.inBody("Quest Password Manager") else 0
         s.found("FogBugz") if s.inBody("FogBugz") and s.inBody("fogbugz.stackexchange.com") else 0
@@ -177,6 +177,13 @@ class Probe (threading.Thread):
         s.found("Sharepoint") if s.inHeader("MicrosoftSharePointTeamServices", ".") else 0
         s.found("Default JMX-Console") if s.inBody("/jmx-console") and s.inBody("Welcome to JBoss") else 0
         s.found("Jenkins") if s.inBody("Dashboard [Jenkins]") else 0
+        s.found("Axis2") if s.inBody("Login to Axis2 :: Administration page") or s.inBody("Welcome to the Axis2 administration console") else 0
+        s.found("Ektron CMS400") if s.inBody("EktronClientManager") or  s.inBody("/WorkArea/FrameworkUI/js/ektron.javascript.ashx") or s.inBody("/WorkArea/FrameworkUI/js/Ektron/Ektron.Class.js") else 0
+        s.found("Ektron CMS400 Login") if s.inBody("CMS400 Login") else 0
+        s.found("Umbraco CMS") if s.inBody("/umbraco/") or s.inBody("Login - Umbraco") else 0
+        s.found("PHPMyAdmin") if s.inBody("phpMyAdmin") and s.inBody("www.phpmyadmin.net") else 0
+        s.found("Nagios") if s.inBody("Nagios Core") else 0
+        
 
         # always print server header. TODO make this cleaner
         server = s.resp.get('server','')
