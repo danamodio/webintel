@@ -108,6 +108,7 @@ class Probe (threading.Thread):
         s.found("Accellion SFT") if s.inBody("Secured by Accellion") else 0
         s.found("F5 BIG-IP") if (s.inBody("licensed from F5 Networks") and s.inUrl("my.policy")) or (s.inBody("BIG-IP logout page") and s.inUrl("my.logout.php")) else 0
         s.found("Confluence") if s.inBody("login to Confluence") or s.inBody("Log in to Confluence") or s.inBody("com-atlassian-confluence") else 0
+        s.found("JIRA") if s.inBody("JIRA administrators") or s.inBody("jira.webresources") else 0
         s.found("Lotus Domino") if s.inBody("homepage.nsf/homePage.gif?OpenImageResource") or (s.inBody("Notes Client") and s.inBody("Lotus")) else 0
         s.found("Citrix ShareFile Storage Server") if s.inBody("ShareFile Storage Server") else 0
         s.found("IIS7 Welcome Page") if s.inBody("welcome.png") and s.inBody("IIS7") else 0
@@ -124,6 +125,8 @@ class Probe (threading.Thread):
         s.found("Directory Listing") if s.inBody("Index of") or s.inBody("Parent Directory") else 0
         s.found("Junos Pulse") if s.inBody("dana-na") else 0
         s.found("Default Tomcat Homepage") if s.inBody("this is the default Tomcat home page") else 0
+        s.found("Default Tomcat Homepage") if s.inBody("If you're seeing this, you've successfully installed Tomcat. Congratulations!") else 0 #tomcat7
+        s.found("Default Tomcat Homepage w/ links to Tomcat Manager") if s.inBody("/manager/html") and s.inBody("/manager/status") else 0
         s.found("Quest Password Manager") if s.inBody("Quest Password Manager") else 0
         s.found("FogBugz") if s.inBody("FogBugz") and s.inBody("fogbugz.stackexchange.com") else 0
         s.found("WebSphere 6.1") if s.inBody("IBM HTTP Server") and s.inBody("infocenter/wasinfo/v6r1") else 0
@@ -172,6 +175,9 @@ class Probe (threading.Thread):
         s.found("McAfee Agent Activity Log") if s.inBody("AgentGUID") and s.inBody("Log") else 0
         s.found("Rails") if s.inBody("assets/javascripts") or s.inBody("assets/stylesheets") else 0
         s.found("Sharepoint") if s.inHeader("MicrosoftSharePointTeamServices", ".") else 0
+        s.found("Default JMX-Console") if s.inBody("/jmx-console") and s.inBody("Welcome to JBoss") else 0
+        s.found("Jenkins") if s.inBody("Dashboard [Jenkins]") else 0
+
         # always print server header. TODO make this cleaner
         server = s.resp.get('server','')
         s.found(server) if server else 0
