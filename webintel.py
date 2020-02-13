@@ -40,7 +40,6 @@ qhosts = queue.Queue()
 def warn(*objs):
     print("[*][WARNING]: ", *objs, file=sys.stderr)
 
-
 def error(*objs):
     print("[!][ERROR]: ", *objs)
 
@@ -70,7 +69,7 @@ class TitleParser(HTMLParser):
         if tag == "title":
             self.title = data
 
-# TODO -- could go into body and grep entire response
+# TODO -- could go into body and grep entire response. also javascript. have some other ideas for this.
 class LinkParser(HTMLParser):
     def __init__(self):
         self.links = []
@@ -104,8 +103,7 @@ class Probe (threading.Thread):
         elif args.output == "csv":
             print( "{status}, {length}, {url}, {data}".format(status=str(self.resp.status), length=str(len(self.respdata)), url=self.url, data=data) )
         elif args.output == "xml":
-            print("<item><url>" + url + "</url><data>" + data + "</data></item>")
-        sys.stdout.flush()
+            print( "<item><status>{status}</status><length>{length}</length><url>{url}</url><data>{data}</data></item>".format(status=str(self.resp.status), length=str(len(self.respdata)), url=self.url, data=data) )
 
         if args.outputjson:
             args.outputjson.write( json.dumps( { 
@@ -116,6 +114,7 @@ class Probe (threading.Thread):
                 'data': data
             } ))
 
+        sys.stdout.flush()
 
     def inBody(self, test):
         return True if self.respdata.find(test.encode())>-1 else False
