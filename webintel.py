@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 # DanAmodio
 #
@@ -11,18 +11,23 @@ import traceback
 import argparse
 import base64
 import xml.etree.ElementTree as ET
-from HTMLParser import HTMLParser
+#from HTMLParser import HTMLParser
+from html.parser import HTMLParser
 import httplib2
 import socket
-import thread
+#import thread
 import threading
-import Queue
+import queue
 import time
 import ssl, OpenSSL
-from urlparse import urlparse
+from urllib.parse import urlparse
+import json
 
-reload(sys)  
-sys.setdefaultencoding('utf8')
+#reload(sys)  
+#sys.setdefaultencoding('utf8')
+
+if sys.version_info[0] >= 3:
+    unicode = str
 
 # GLOBALS
 args = None
@@ -30,7 +35,7 @@ args = None
 threads = []
 exitFlag = False
 qlock = threading.Lock()
-qhosts = Queue.Queue()
+qhosts = queue.Queue()
 
 def warn(*objs):
     print("[*][WARNING]: ", *objs, file=sys.stderr)
@@ -65,6 +70,19 @@ class TitleParser(HTMLParser):
         if tag == "title":
             self.title = data
 
+# TODO -- could go into body and grep entire response
+class LinkParser(HTMLParser):
+    def __init__(self):
+        self.links = []
+        HTMLParser.__init__(self)
+        
+    def handle_starttag(self, tag, attrs):
+        if tag=="a":
+            for attr in attrs:
+                if attr[0] == 'href':
+                    self.links.append( attr[1] )
+                    #print( "Found link: ", attr[1])
+
 # Probing class
 class Probe (threading.Thread):
     def __init__(self):
@@ -74,19 +92,33 @@ class Probe (threading.Thread):
         self.didFind = False
         
     def out(self, data):
-        tp = TitleParser()
-        tp.feed(self.respdata)
-        title = ("{}".format(tp.title.replace("\n","").replace("\r","").lstrip(" ").rstrip(" "))) if tp.title else ""
         if args.output == "default":
-            print( "[{status}][{length}] {url} | {data} | {title}".format(status=str(self.resp.status), length=str(len(self.respdata)), url=self.url, data=data, title=title) )
+            print( "[{status}][{length}] {url} | {data}".format(status=str(self.resp.status), length=str(len(self.respdata)), url=self.url, data=data) )
+        elif args.output == "json":
+            print( json.dumps({
+                'status' : self.resp.status, 
+                'length': len(self.respdata), 
+                'url' : self.url, 
+                'data': data
+            }))
         elif args.output == "csv":
-            print( "{status}, {length}, {url}, {data}, {title}".format(status=str(self.resp.status), length=str(len(self.respdata)), url=self.url, data=data, title=title) )
+            print( "{status}, {length}, {url}, {data}".format(status=str(self.resp.status), length=str(len(self.respdata)), url=self.url, data=data) )
         elif args.output == "xml":
             print("<item><url>" + url + "</url><data>" + data + "</data></item>")
         sys.stdout.flush()
 
+        if args.outputjson:
+            args.outputjson.write( json.dumps( { 
+                '_type' : 'found',
+                'status' : self.resp.status, 
+                'length': len(self.respdata), 
+                'url' : self.url, 
+                'data': data
+            } ))
+
+
     def inBody(self, test):
-        return True if self.respdata.find(test)>-1 else False
+        return True if self.respdata.find(test.encode())>-1 else False
 
     def inUrl(self, test):
         return True if self.resp.get('content-location','').find(test)>-1 else False
@@ -185,15 +217,32 @@ class Probe (threading.Thread):
         s.found("Nagios") if s.inBody("Nagios Core") else 0
         s.found("Oracle Middleware") if s.inBody("Welcome to Oracle Fusion Middleware") else 0
         s.found("Oracle Reports") if s.inBody("Oracle Reports Services - Servlet") else 0
+        s.found("Content-Security-Policy") if s.resp.get('content-security-policy') else 0
+        s.found("Sentry.io CSP") if s.inHeader("content-security-policy", "sentry_key") or s.inHeader("content-security-policy", "sentry.io") else 0 # https://hackerone.com/reports/374737
+        s.found("CVS directory") if s.inBody("$RCSfile:") or s.inBody("$Revision:") else 0
         
 
         # always print server header. TODO make this cleaner
         server = s.resp.get('server','')
-        s.found(server) if server else 0
+        s.found("Server: " + server) if server else 0
+        
         authn = s.resp.get('www-authenticate','')
         s.found("WWW-Authenticate: {}".format(authn)) if authn else 0
+
         poweredb = s.resp.get('x-powered-by', '')
-        s.found(poweredb) if poweredb else 0
+        s.found("X-Powered-By: " + poweredb) if poweredb else 0
+
+        # extract title
+        tp = TitleParser()
+        tp.feed( unicode(s.respdata, errors='ignore') )
+        s.found("Title: {}".format(tp.title.replace("\n","").replace("\r","").lstrip(" ").rstrip(" "))) if tp.title else 0
+
+        # parse links
+        if args.links:
+            lp = LinkParser()
+            lp.feed( unicode(s.respdata, errors='ignore') )
+            for link in lp.links:
+                s.found("Link: "+ link)
 
     def probeUrl(self):
         #print "[*] Probing " + url
@@ -231,17 +280,32 @@ class Probe (threading.Thread):
             else:
                 self.resp, self.respdata = h.request(self.url)
             if args.debug:
-                print(self.resp)
-                print(self.respdata)
+                #print(self.resp)
+                #print(self.respdata)
+                print( json.dumps( { 
+                    'url' : self.url,
+                    'response': self.resp, 
+                    'data': unicode( self.respdata, encoding='utf-8', errors='ignore') 
+                } ) )
+                #json.dumps( {'response': self.resp, 'data': unicode( self.respdata, encoding='utf-8', errors='ignore')  })
+                #json.dumps( self.resp )
+            if args.outputjson:
+                args.outputjson.write( json.dumps( { 
+                    '_type' : 'resp',
+                    'url' : self.url,
+                    'response': self.resp, 
+                    'data': unicode( self.respdata, encoding='utf-8', errors='ignore') 
+                } ))
+
             self.evalRules()
             if self.didFind == False:
                 self.out("No Signature Match")
             else:
                 self.didFind = False
-        except httplib2.SSLHandshakeError as e:
-            error("Could create SSL connection to " + self.url)
-            if args.debug:
-                traceback.print_exc()
+        #except httplib2.SSLHandshakeError as e:
+        #    error("Could create SSL connection to " + self.url)
+        #    if args.debug:
+        #        traceback.print_exc()
         except socket.error as e:
             error("Could not open socket to " + self.url)
             if args.debug:
@@ -258,7 +322,10 @@ class Probe (threading.Thread):
             e = sys.exc_info()[0]
             error(str(e) + " (" + self.url + ")")
             if args.debug:
-                traceback.print_tb(sys.exc_info()[2])
+                #print( e.args )
+                #traceback.print_tb(sys.exc_info()[2])
+                print( traceback.format_exc().splitlines()[0] )
+                traceback.print_exc()
 
 def parse():
     if args.fqdn:
@@ -448,24 +515,38 @@ def parseList():
 def main(argv):
     filename = ""
     parser = argparse.ArgumentParser(description='Shakedown webservices for known CMS and technology stacks - @DanAmodio')
-    parser.add_argument('--nmap', type=file, help='nmap xml file.')
-    parser.add_argument('--nessus', type=file, help='.nessus xml file.')
-    parser.add_argument('--listfile', type=file, help='straight file list containing fully qualified urls.')
-    parser.add_argument('--url', type=str, required=False, help='profile a url.')
-    parser.add_argument('--output', default="default", type=str, required=False, help='output type: csv, xml')
+    parser.add_argument('--nmap', type=argparse.FileType('r'), help='nmap xml file.')
+    parser.add_argument('--nessus', type=argparse.FileType('r'), help='.nessus xml file.')
+    parser.add_argument('-iL', '--listfile', type=argparse.FileType('r'), help='straight file list containing fully qualified urls.')
+    parser.add_argument('-u', '--url', type=str, required=False, help='profile a url.')
+    parser.add_argument('-o', '--output', default="default", type=str, required=False, choices=['default', 'csv', 'xml', 'json'], help='output type')
+    #parser.add_argument('-oJ', type=str, help="Output JSON file name with -responses and -detections appended." )
+    parser.add_argument('-oJ', '--outputjson', type=argparse.FileType('w'), help='JSON output file for raw responses and detections')
     #parser.add_argument('--subnet', type=str, required=False, help='subnet to scan.')
     #parser.add_argument('--ports', type=str, default='80,8080,8081,8000,9000,443,8443', required=False, help='the ports to scan for web services. e.g. 80,8080,443') # just use NMAP
     parser.add_argument('--fqdn', default=False, action="store_true", help='Use the fully qualified domain name from scanner output (DNS). Pretty important if doing this over the internet due to how some shared hosting services route.')
     parser.add_argument('--debug', default=False, action="store_true", help="Print the response data.")
-    parser.add_argument('--threads', default=1, type=int, help='Number of concurrent request threads.')
+    parser.add_argument('-t', '--threads', default=1, type=int, help='Number of concurrent request threads.')
     #parser.add_argument('--rules',default='rules',type=file,required=False,help='the rules file')
     #parser.add_argument('--nofollowup', default=False, action="store_true", help='disable sending followup requests to a host, like /wp-login.php.') # I want to avoid doing this at all with this script.
     # --fingerprint (default)
     parser.add_argument('--uri', type=str, required=False, help='get status code for a URI across all inputs. e.g. /Trace.axd')
     parser.add_argument('--dav', default=False, action="store_true", help="finger WebDav with a PROPFIND request.")
     parser.add_argument('--cert', default=False, action="store_true", help="Retrieve information from server certificate.")
+    parser.add_argument('--links', default=False, action="store_true", help="Extract links from HTTP response")
     # TODO - http://stackoverflow.com/questions/7689941/how-can-i-retrieve-the-tls-ssl-peer-certificate-of-a-remote-host-using-python
     # http://stackoverflow.com/questions/30862099/how-can-i-get-certificate-issuer-information-in-python
+
+    # TODO - parse stdin 
+    # cat results.json | jq -s '.[] | select(.data == "Tomcat") | .url' | python3 webintel.py --stdin
+    # or grep
+    # grep -i Tomcat results.json | jq -c '.url' | sort | uniq | python3 webintel.py --stdin --uri /manager/html
+
+    # cat output.json | jq 'select(._type == "found")'
+
+    #  cat test.json | jq 'select( .data | contains("envoy") )'
+
+    # TODO -- should i just modularize this and have a REPL / pipe functions?
 
     if len(argv) == 0:
         parser.print_help()
